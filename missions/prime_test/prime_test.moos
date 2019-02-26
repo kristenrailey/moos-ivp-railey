@@ -1,0 +1,203 @@
+// Level 2 Configuration file: M. Benjamin
+
+ServerHost = localhost
+ServerPort = 9000
+Simulator  = true
+
+Community  = prime_test
+
+MOOSTimeWarp = 1
+
+LatOrigin  = 43.825300 
+LongOrigin = -70.330400 
+
+//------------------------------------------
+// Antler configuration  block
+ProcessConfig = ANTLER
+{
+  MSBetweenLaunches = 200
+
+  Run = MOOSDB		@ NewConsole = false
+
+ // Run = pPrimeFactor	@ NewConsole = true
+  Run = uTimerScript	@ NewConsole = true
+  Run = pLogger		@ Newconsole = false
+  
+}
+
+//------------------------------------------
+// uSimMarine config block
+
+ProcessConfig = uSimMarine
+{
+  AppTick	= 10
+  CommsTick	= 10
+
+  START_X       = 0
+  START_Y       = 0
+  START_SPEED   = 0
+  START_HEADING = 180
+
+  PREFIX        = NAV
+}
+
+
+//------------------------------------------
+// uProcessWatch config block
+
+ProcessConfig = uProcessWatch
+{
+  AppTick   = 4
+  CommsTick = 4
+
+  term_report_interval = 0.8
+
+  summary_wait = 5
+
+  nowatch   = uXMS*
+  nowatch   = uPokeDB*
+  nowatch   = uTermCommand*
+  watch_all = true
+}
+
+
+//------------------------------------------
+// pHelmIvP config block
+
+ProcessConfig = pHelmIvP
+{
+  AppTick    = 4
+  CommsTick  = 4
+
+  Behaviors  = prime_test.bhv
+  Verbose    = quiet
+  Domain     = course:0:359:360
+  Domain     = speed:0:4:21
+
+  IVP_BEHAVIOR_DIR = ../../lib
+
+  ok_skew = any
+  active_start = false
+}
+
+//------------------------------------------
+// pMarinePID config block
+
+ProcessConfig = pMarinePID
+{
+  AppTick    = 20
+  CommsTick  = 20
+
+  VERBOSE       = true
+  DEPTH_CONTROL = false
+
+  // Yaw PID controller
+  YAW_PID_KP		 = 0.5
+  YAW_PID_KD		 = 0.0
+  YAW_PID_KI		 = 0.0
+  YAW_PID_INTEGRAL_LIMIT = 0.07
+
+  // Speed PID controller
+  SPEED_PID_KP		 = 1.0
+  SPEED_PID_KD		 = 0.0
+  SPEED_PID_KI		 = 0.0
+  SPEED_PID_INTEGRAL_LIMIT = 0.07
+
+  //MAXIMUMS
+  MAXRUDDER    = 100
+  MAXTHRUST    = 100
+
+  // A non-zero SPEED_FACTOR overrides use of SPEED_PID
+  // Will set DESIRED_THRUST = DESIRED_SPEED * SPEED_FACTOR
+  SPEED_FACTOR = 20
+}
+
+//------------------------------------------
+// pMarineViewer config block
+
+ProcessConfig = pMarineViewer
+{
+  AppTick    = 4
+  CommsTick  = 4
+
+  TIFF_FILE            = forrest19.tif
+  set_pan_x            = -90
+  set_pan_y            = -280
+  zoom                 = 0.65
+  vehicle_shape_scale  = 1.5
+  hash_delta           = 50
+  hash_shade           = 0.4
+  hash_viewable        = true
+
+  scope = ODOMETRY_DIST
+
+   // Appcast configuration
+  appcast_height       = 75
+  appcast_width        = 30
+  appcast_viewable     = true
+  appcast_color_scheme = indigo
+  nodes_font_size      = medium
+  procs_font_size      = medium
+  appcast_font_size    = small
+
+  BUTTON_ONE = DEPLOY # DEPLOY=true
+  BUTTON_ONE = MOOS_MANUAL_OVERIDE=false # RETURN=false
+  BUTTON_TWO = RETURN # RETURN=true
+}
+
+//------------------------------------------
+// pNodeReporter config block
+
+ProcessConfig = pNodeReporter
+{
+  AppTick	= 2
+  CommsTick	= 2
+  VESSEL_TYPE   = KAYAK
+}
+
+
+//--------------------------------------------
+// pOdometry config block
+
+ProcessConfig = pOdometry
+{
+  AppTick	= 4
+  CommsTick	= 4
+}
+
+//--------------------------------------------
+// uTimerScript config block
+
+ProcessConfig = uTimerScript
+{
+  AppTick = 4
+  CommsTick = 4
+  event  = var=NUM_VALUE, val="112582705942171", time=0.25
+  event  = var=NUM_VALUE, val="115797848077099", time=0.50
+//   event  = var=NUM_VALUE, val="117463495419967", time=0.75
+
+   event  = var=NUM_VALUE, val="125", time=1.00
+   event  = var=NUM_VALUE, val="225", time=1.25
+   event  = var=NUM_VALUE, val="325", time=1.50
+
+  event  = var=NUM_VALUE, val="123939877913659", time=1.75
+ //  event  = var=NUM_VALUE, val="126794093929207", time=2.00
+//   even   = var=NUM_VALUE, val="7797153", time=2.5
+  reset_max = 0
+  reset_time = all_posted
+
+
+}
+
+//---------------------------------------------------
+// pLogger config block
+
+ProcessConfig = pLogger
+ {
+   AsyncLog = true
+   WildCardLogging = true
+   WildCardOmitPattern = *_STATUS
+
+   LOG =  PRIME_RESULT @ 0
+   LOG =  NUM_VALUE @ 0
+ }
