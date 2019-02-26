@@ -6,7 +6,7 @@
 #include <iostream>
 #include <algorithm>
 #include <sstream>
-#include "/home/kristenrailey/moos-ivp/MOOS_Aug2815/MOOSCore/Core/libMOOS/Utils/include/MOOS/libMOOS/Utils/MOOSUtils.h"
+#include "MOOS/libMOOS/Utils/MOOSUtils.h"
 
 #ifndef PRIME_ENTRY_HEADER
 #define PRIME_ENTRY_HEADER
