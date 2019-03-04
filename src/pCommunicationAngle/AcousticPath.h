@@ -5,7 +5,7 @@
 #include <cmath>
 #include <list>
 
-#define G 9.8
+//#define PI 3.14159265
 
 class AcousticPath
 {
@@ -19,7 +19,7 @@ class AcousticPath
   void setSurfaceSoundSpeed(float c_0) {m_c_0=c_0;};
   void setTimeInterval(float time_int){m_time_int=time_int;};
   void setWaterDepth(float water_depth){m_water_depth=water_depth;};
-  void setSoundSpeedGrad(float gradient){m_sound_speed_gradient= gradient;};
+  void setSoundSpeedGrad(float gradient){m_gradient= gradient;};
   //Calculation functions
   float calcC(float z);
   float calcMidpt(float r_1,float r_2);
@@ -41,7 +41,7 @@ class AcousticPath
   protected:
   //Inputs
     float m_c_0, m_water_depth;
-    float m_time_int, m_sound_speed_gradient;
+    float m_time_int, m_gradient;
  
   
 

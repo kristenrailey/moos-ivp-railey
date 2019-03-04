@@ -50,15 +50,6 @@ bool CommunicationAngle::OnNewMail(MOOSMSG_LIST &NewMail)
       m_nav_x = true;
     }
     
-    else if (key == "NAV_Y"){
-      std::cout<<"nav_Y: "<<dval<<std::endl;
-    }
-
-    
-    else if (key == "NEPTUNE_NAV_Y"){
-      std::cout<< "nav y neptune: "<<dval<<std::endl;
-    }
-    
     else if (key == "NAV_DEPTH"){
       m_z_src = dval;
       m_nav_depth = true;

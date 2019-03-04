@@ -9,7 +9,7 @@
 //calcC(z)
 // Calculate speed of sound, c from depth z and speed of sound at depth 0, c_0
 float AcousticPath::calcC(float z){
-  return m_c_0+G*z;
+  return m_c_0+m_gradient*z;
 }
 
 
@@ -40,7 +40,7 @@ float AcousticPath::calcCircCenter_r(float z_center, float int_slope, float int_
 }
 
 float AcousticPath::calcCircCenter_z(){
-  return -m_c_0/G;
+  return -m_c_0/m_gradient;
 }
 
 
@@ -52,11 +52,11 @@ float AcousticPath::calcRBisect(float r_1,float z_1,float r_center, float z_cent
 
 
 float AcousticPath::calcThetaSrc(float R, float z_src){
-  return acos((calcC(z_src))/(R*G));
+  return acos((calcC(z_src))/(R*m_gradient))* 180.0 / 3.14159265;
 }
 
 bool AcousticPath::checkValidR(float R){
-  if ((R-m_c_0/G) > m_water_depth){
+  if ((R-m_c_0/m_gradient) > m_water_depth){
     return false;
   }
   else{
