@@ -42,16 +42,23 @@ bool CommunicationAngle::OnNewMail(MOOSMSG_LIST &NewMail)
     string key   = msg.GetKey();
     double dval  = msg.GetDouble();
     string sval = msg.GetString();
-    std::cout<<"Mail: "<<key<<std::endl;
 
-    if (key ==  "COLLABORATOR_NAME"){
-	std::cout<<sval<<std::endl;
-    }
+  
 
     if (key == "NAV_X"){
       m_r_src = dval;
       m_nav_x = true;
     }
+    
+    else if (key == "NAV_Y"){
+      std::cout<<"nav_Y: "<<dval<<std::endl;
+    }
+
+    
+    else if (key == "NEPTUNE_NAV_Y"){
+      std::cout<< "nav y neptune: "<<dval<<std::endl;
+    }
+    
     else if (key == "NAV_DEPTH"){
       m_z_src = dval;
       m_nav_depth = true;
@@ -103,7 +110,8 @@ bool CommunicationAngle::OnConnectToServer()
 bool CommunicationAngle::Iterate()
 {
   if (m_nav_x && m_nav_depth && m_collab_nav_x && m_collab_nav_depth){
-    
+    std::cout<<"Current source and receiver positions: " <<std::endl;
+    std::cout<<"r_src: "<<m_r_src<<", z_src: "<<m_z_src<<", r_rec"<<m_r_rec<<", s_rec: "<<m_z_rec<<std::endl;
    //Find circle equation, given source and receiver position
     m_midpt_r=m_acoustic_path.calcMidpt(m_r_src,m_r_rec);
     m_midpt_z=m_acoustic_path.calcMidpt(m_z_src,m_z_rec);
@@ -111,6 +119,7 @@ bool CommunicationAngle::Iterate()
     m_int_b=m_acoustic_path.calcPerpIntercept(m_int_slope, m_midpt_r,m_midpt_z);
     m_circ_z_center=m_acoustic_path.calcCircCenter_z();
     m_circ_r_center = m_acoustic_path.calcCircCenter_r(m_circ_z_center, m_int_slope, m_int_b);
+    std::cout<<"circle center (r,z): "<<m_circ_r_center<<","<<m_circ_z_center<<std::endl;
     m_R_bisect = m_acoustic_path.calcRBisect(m_r_src,m_z_src,m_circ_r_center,m_circ_z_center);
   
     //Check if valid R.   
@@ -129,7 +138,7 @@ bool CommunicationAngle::Iterate()
       m_circ_r_center_new=m_acoustic_path.calcNewCircCenter_r(m_z_rec, m_r_rec,m_R_new,m_circ_z_center);
       //Recalculate position, keep depth (z_src)
       m_r_src_new= m_acoustic_path.calcPosOnCirc_r(m_circ_z_center, m_circ_r_center_new,m_z_src, m_R_new);
-      std::cout<<"Recalculated new position; m_R_bisect: "<<m_R_bisect<<", m_R_new"<<m_R_new<<", r pos: "<<m_r_src_new<<std::endl;
+      std::cout<<"Recalculated new position; m_R_bisect: "<<m_R_bisect<<", m_R_new"<<m_R_new<<"circ r pos: "<<m_circ_r_center_new<<", r pos: "<<m_r_src_new<<std::endl;
     }
   }
   else{
