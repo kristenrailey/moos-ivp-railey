@@ -7,7 +7,7 @@ ServerPort = 9011
 
 ProcessConfig = ANTLER
 {
-  
+  Run = uXMS @NewConsole = true
   Run = pCommunicationAngle @NewConsole = true ~ pCommunicationAngle_kr
 }
 
@@ -20,6 +20,8 @@ ProcessConfig = uXMS
    CommsTick = 4
  
    VAR = ACOUSTIC_PATH_REF
+   VAR = CONNECTIVITY_LOCATION_REF
+
 
 }
 
