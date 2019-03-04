@@ -17,12 +17,9 @@ class AcousticPath
 
   //Set variables
   void setSurfaceSoundSpeed(float c_0) {m_c_0=c_0;};
-  void setRPosRec(float r_rec){m_r_rec=r_rec;};
-  void setZPosRec(float z_rec){m_z_rec=z_rec;};
-  void setRPosSrc(float r_src){m_r_src=r_src;};
-  void setZPosSrc(float z_src){m_z_src=z_src;};
+  void setTimeInterval(float time_int){m_time_int=time_int;};
   void setWaterDepth(float water_depth){m_water_depth=water_depth;};
-   
+  void setSoundSpeedGrad(float gradient){m_sound_speed_gradient= gradient;};
   //Calculation functions
   float calcC(float z);
   float calcMidpt(float r_1,float r_2);
@@ -33,17 +30,18 @@ class AcousticPath
 
   float calcCircCenter_z();
   float calcRBisect(float r_1,float z_1,float r_center, float z_center);
-  float calcThetaSrc(float R);
+  float calcThetaSrc(float R,float z_src);
   bool checkValidR(float R);
   float calcValidR(float R_current);
 
 
-  float calcNewCircCenter_r(float R_new,float circ_z_center);
-  float calcPosOnCirc_r(float circ_z_center,float circ_r_center, float R);
+  float calcNewCircCenter_r(float z_rec, float r_rec,float R_new,float circ_z_center);
+  float calcPosOnCirc_r(float circ_z_center,float circ_r_center, float z_src, float R);
 
   protected:
   //Inputs
-    float m_c_0, m_r_rec, m_z_rec, m_r_src, m_z_src, m_water_depth;
+    float m_c_0, m_water_depth;
+    float m_time_int, m_sound_speed_gradient;
  
   
 

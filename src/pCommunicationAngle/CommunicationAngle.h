@@ -10,6 +10,7 @@
 
 #include "MOOS/libMOOS/MOOSLib.h"
 #include "AcousticPath.h"
+#include <iostream>
 
 class CommunicationAngle : public CMOOSApp
 {
@@ -30,6 +31,9 @@ class CommunicationAngle : public CMOOSApp
   
  private: // State variables
     AcousticPath m_acoustic_path;
+    float m_r_src, m_z_src, m_r_rec, m_z_rec;
+    float m_midpt_r, m_midpt_z, m_int_slope, m_int_b, m_circ_z_center, m_circ_r_center, m_R_bisect, m_theta_src, m_R_new, m_circ_r_center_new;
+    bool m_valid_R;
 };
 
 #endif 

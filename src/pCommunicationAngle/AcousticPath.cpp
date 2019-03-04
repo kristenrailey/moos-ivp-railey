@@ -51,8 +51,8 @@ float AcousticPath::calcRBisect(float r_1,float z_1,float r_center, float z_cent
 
 
 
-float AcousticPath::calcThetaSrc(float R){
-  return acos((calcC(m_z_src))/(R*G));
+float AcousticPath::calcThetaSrc(float R, float z_src){
+  return acos((calcC(z_src))/(R*G));
 }
 
 bool AcousticPath::checkValidR(float R){
@@ -69,16 +69,16 @@ float AcousticPath::calcValidR(float R_current){
   return R_new;
 }
 
-float AcousticPath::calcNewCircCenter_r(float R_new,float circ_z_center){
+float AcousticPath::calcNewCircCenter_r(float z_rec, float r_rec, float R_new,float circ_z_center){
   //Recalculate circle center ,since R is invalid assume depth is the same (z_src)
-  float temp_term=sqrt(pow(R_new,2)-pow((m_z_rec-circ_z_center),2));
-  float temp_r_new=-(temp_term-m_r_rec);
+  float temp_term=sqrt(pow(R_new,2)-pow((z_rec-circ_z_center),2));
+  float temp_r_new=-(temp_term-r_rec);
   return temp_r_new;  
-}
+  }
 
-float AcousticPath::calcPosOnCirc_r(float circ_z_center,float circ_r_center, float R){
+float AcousticPath::calcPosOnCirc_r(float circ_z_center,float circ_r_center, float z_src, float R){
   // Calculate r given circle center and z-pos of source
-  float temp_term=sqrt(pow(R,2)-pow((m_z_src-circ_z_center),2));
+  float temp_term=sqrt(pow(R,2)-pow((z_src-circ_z_center),2));
   float r_pos=(temp_term+circ_r_center);
   return r_pos;
 }
@@ -134,5 +134,5 @@ AcousticPath my_acoustic_path;
 
 
   return 0;
-  }
-*/
+  }*/
+
