@@ -5,7 +5,6 @@
 #include <cmath>
 #include <list>
 
-//#define PI 3.14159265
 
 class AcousticPath
 {

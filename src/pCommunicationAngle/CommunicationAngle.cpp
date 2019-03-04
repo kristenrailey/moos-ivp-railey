@@ -8,6 +8,7 @@
 #include <iterator>
 #include "MBUtils.h"
 #include "CommunicationAngle.h"
+#include <sstream>
 
 using namespace std;
 
@@ -121,7 +122,10 @@ bool CommunicationAngle::Iterate()
       //Calculate steering angle
       m_theta_src = m_acoustic_path.calcThetaSrc(m_R_bisect,m_z_src);
       std::cout<<"Steering angle: "<<m_theta_src<<std::endl;
-
+      //Notify angle and TL with ACOUSTIC_PATH
+      stringstream ss;
+      ss<<"elev_angle = "<<m_theta_src<<", transmission loss: "<<", id = krailey@mit.edu";
+      Notify("ACOUSTIC_PATH",ss.str());
       }
     else{
     //Calc new R and circle (r) center
