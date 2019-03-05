@@ -139,15 +139,16 @@ bool CommunicationAngle::Iterate()
     if (m_valid_R){
       //Calculate steering angle
       m_theta_src = m_acoustic_path.calcThetaSrc(m_R_bisect,m_z_src);
-      std::cout<<"Steering angle: "<<m_theta_src<<std::endl;
+      m_theta_src_deg = m_acoustic_path.convertRad2Degrees(m_theta_src);
+      std::cout<<"Steering angle: (rad) "<<m_theta_src<<", (deg)"<<m_theta_src_deg<<std::endl;
 
       //Calculate TL
-      m_d_theta = 0.001;
+      m_d_theta = 0.0000001;
       m_TL = m_acoustic_path.calcTransmissionLoss(m_theta_src, m_z_src,m_z_rec, m_R_bisect, m_d_theta);
 
       //Notify angle and TL with ACOUSTIC_PATH
       stringstream ss;
-      ss<<"elev_angle = "<<m_theta_src<<", transmission loss: "<<", id = krailey@mit.edu";
+      ss<<"elev_angle = "<<m_theta_src<<", transmission loss: "<<m_TL<<", id = krailey@mit.edu";
       Notify("ACOUSTIC_PATH",ss.str());
       }
     else{

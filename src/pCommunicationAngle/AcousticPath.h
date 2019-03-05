@@ -14,7 +14,7 @@ class AcousticPath
   ~AcousticPath() {};
 
 
-  //Set variables
+  //Set functions for initial params
   void setSurfaceSoundSpeed(float c_0) {m_c_0=c_0;};
   void setTimeInterval(float time_int){m_time_int=time_int;};
   void setWaterDepth(float water_depth){m_water_depth=water_depth;};
@@ -34,6 +34,7 @@ class AcousticPath
   float calcValidR(float R_current);
   float calcNewCircCenter_r(float z_rec, float r_rec,float R_new,float circ_z_center);
   float calcPosOnCirc_r(float circ_z_center,float circ_r_center, float z_src, float R);
+  float convertRad2Degrees(float angle);
 
   //Calculation functions for Transmission Loss
   float calcArcLength(float R, float theta_src, float theta_rec);
@@ -49,6 +50,7 @@ class AcousticPath
   //Inputs
     float m_c_0, m_water_depth;
     float m_time_int, m_gradient;
+    
  
   
 

@@ -63,8 +63,12 @@ float AcousticPath::calcRBisect(float r_1,float z_1,float r_center, float z_cent
 
 //Calculate transmitter/source angle for a given radius and source depth
 float AcousticPath::calcThetaSrc(float R, float z_src){
-  //Negative accounting for coordinate system (z is positive, increasing depth)
-  return -acos((calcC(z_src))/(R*m_gradient))* 180.0 / PI_KR;
+  //Undid for now - Negative accounting for coordinate system (z is positive, increasing depth)
+  return acos((calcC(z_src))/(R*m_gradient));
+}
+
+float AcousticPath::convertRad2Degrees(float angle){
+  return angle * 180 / PI_KR;
 }
 
 //Check if radius from circle is less than water depth
