@@ -5,6 +5,11 @@
  ****************************************************/
 #include "AcousticPath.h"
 
+//calcProj_r
+//Calculate projected r from x- and y- position.
+float AcousticPath::calcProj_r(float x_pos,float y_pos){
+  return sqrt(pow(x_pos,2)+pow(y_pos,2));
+}
 
 //calcC(z)
 // Calculate speed of sound, c from depth z and speed of sound at depth 0, c_0
@@ -19,7 +24,8 @@ float AcousticPath::calcMidpt(float r_1,float r_2){
   return (r_1+r_2)/2;
 }
 
-//Calculate perpendicular slope
+//calcPerpSlope(r_1,z_1,r_2,z_2)
+//Calculate perpendicular slope from two points
 float AcousticPath::calcPerpSlope(float r_1,float z_1, float r_2, float z_2){
   float slope=(z_2-z_1)/(r_2-r_1); 
   return -1/slope;
@@ -50,11 +56,12 @@ float AcousticPath::calcRBisect(float r_1,float z_1,float r_center, float z_cent
 }
 
 
-
+//Calculate transmitter/source angle for a given radius and source depth
 float AcousticPath::calcThetaSrc(float R, float z_src){
   return acos((calcC(z_src))/(R*m_gradient))* 180.0 / 3.14159265;
 }
 
+//Check if radius from circle is less than water depth
 bool AcousticPath::checkValidR(float R){
   if ((R-m_c_0/m_gradient) > m_water_depth){
     return false;
@@ -64,6 +71,7 @@ bool AcousticPath::checkValidR(float R){
   }
 }
 
+//Calculate a valid radius by accounting for water depth
 float AcousticPath::calcValidR(float R_current){
   float R_new= R_current-(R_current-m_water_depth);
   return R_new;

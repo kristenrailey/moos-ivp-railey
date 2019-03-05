@@ -47,8 +47,15 @@ bool CommunicationAngle::OnNewMail(MOOSMSG_LIST &NewMail)
   
 
     if (key == "NAV_X"){
-      m_r_src = dval;
+      //   m_r_src = dval;
+      m_x_src = dval;
       m_nav_x = true;
+    }
+
+    else if (key == "NAV_Y"){
+      //   m_r_src = dval;
+      m_y_src = dval;
+      m_nav_y = true;
     }
     
     else if (key == "NAV_DEPTH"){
@@ -56,9 +63,14 @@ bool CommunicationAngle::OnNewMail(MOOSMSG_LIST &NewMail)
       m_nav_depth = true;
     }
     else if (key == "NEPTUNE_NAV_X"){
-      m_r_rec = dval;
+      m_x_rec = dval;
       m_collab_nav_x = true;
     }
+    else if (key == "NEPTUNE_NAV_Y"){
+      m_y_rec = dval;
+      m_collab_nav_x = true;
+    }
+       
     else if (key == "NEPTUNE_NAV_DEPTH"){
       m_z_rec = dval;
       m_collab_nav_depth = true;
@@ -101,7 +113,7 @@ bool CommunicationAngle::OnConnectToServer()
 
 bool CommunicationAngle::Iterate()
 {
-  if (m_nav_x && m_nav_depth && m_collab_nav_x && m_collab_nav_depth){
+  if (m_nav_x && m_nav_y && m_nav_depth && m_collab_nav_x && m_collab_nav_y && m_collab_nav_depth){
     std::cout<<"Current source and receiver positions: " <<std::endl;
     std::cout<<"r_src: "<<m_r_src<<", z_src: "<<m_z_src<<", r_rec"<<m_r_rec<<", s_rec: "<<m_z_rec<<std::endl;
    //Find circle equation, given source and receiver position

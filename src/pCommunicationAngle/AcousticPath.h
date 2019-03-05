@@ -20,6 +20,7 @@ class AcousticPath
   void setWaterDepth(float water_depth){m_water_depth=water_depth;};
   void setSoundSpeedGrad(float gradient){m_gradient= gradient;};
   //Calculation functions
+  float calcProj_r(float x_pos,float y_pos);
   float calcC(float z);
   float calcMidpt(float r_1,float r_2);
   float calcPerpSlope(float r_1,float z_1, float r_2, float z_2);
