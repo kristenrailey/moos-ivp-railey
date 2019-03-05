@@ -6,9 +6,13 @@
 #include "AcousticPath.h"
 
 //calcProj_r
-//Calculate projected r from x- and y- position.
-float AcousticPath::calcProj_r(float x_pos,float y_pos){
-  return sqrt(pow(x_pos,2)+pow(y_pos,2));
+//Using x,y positions of src and rec, calculate r_src, and remember to set r_rec = 0
+float AcousticPath::calcProj_r(float x_rec,float y_rec, float x_src, float y_src){
+  float dist_0_rec = sqrt(pow(x_rec,2)+pow(y_rec,2));
+  float dist_0_src = sqrt(pow(x_src,2)+pow(y_src,2));
+  std::cout<<"Distances calculated:(rec) "<<dist_0_rec<<" (src) "<<dist_0_src<<std::endl;
+  return (dist_0_rec-dist_0_src);
+  
 }
 
 //calcC(z)

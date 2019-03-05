@@ -18,8 +18,10 @@ using namespace std;
 CommunicationAngle::CommunicationAngle()
 {
   m_nav_x = false;
+  m_nav_y = false;
   m_nav_depth= false;
   m_collab_nav_x= false;
+  m_collab_nav_y = false;
   m_collab_nav_depth = false;
 
 }
@@ -68,7 +70,7 @@ bool CommunicationAngle::OnNewMail(MOOSMSG_LIST &NewMail)
     }
     else if (key == "NEPTUNE_NAV_Y"){
       m_y_rec = dval;
-      m_collab_nav_x = true;
+      m_collab_nav_y = true;
     }
        
     else if (key == "NEPTUNE_NAV_DEPTH"){
@@ -114,6 +116,10 @@ bool CommunicationAngle::OnConnectToServer()
 bool CommunicationAngle::Iterate()
 {
   if (m_nav_x && m_nav_y && m_nav_depth && m_collab_nav_x && m_collab_nav_y && m_collab_nav_depth){
+    //Calculate r_src, r_rec
+    m_r_src = 0.0;
+    m_r_rec = m_acoustic_path.calcProj_r(m_x_rec,m_y_rec,m_x_src,m_y_src);
+    
     std::cout<<"Current source and receiver positions: " <<std::endl;
     std::cout<<"r_src: "<<m_r_src<<", z_src: "<<m_z_src<<", r_rec"<<m_r_rec<<", s_rec: "<<m_z_rec<<std::endl;
    //Find circle equation, given source and receiver position
