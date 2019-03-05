@@ -4,6 +4,7 @@
  * and source, for a linear sound profile. 
  ****************************************************/
 #include "AcousticPath.h"
+#define PI_KR  3.14159265
 
 //calcProj_r
 //Using x,y positions of src and rec, calculate r_src, and remember to set r_rec = 0
@@ -62,7 +63,8 @@ float AcousticPath::calcRBisect(float r_1,float z_1,float r_center, float z_cent
 
 //Calculate transmitter/source angle for a given radius and source depth
 float AcousticPath::calcThetaSrc(float R, float z_src){
-  return acos((calcC(z_src))/(R*m_gradient))* 180.0 / 3.14159265;
+  //Negative accounting for coordinate system (z is positive, increasing depth)
+  return -acos((calcC(z_src))/(R*m_gradient))* 180.0 / PI_KR;
 }
 
 //Check if radius from circle is less than water depth
@@ -95,6 +97,45 @@ float AcousticPath::calcPosOnCirc_r(float circ_z_center,float circ_r_center, flo
   return r_pos;
 }
 
+float AcousticPath::calcArcLength(float R, float theta_src, float theta_rec){
+  float s = R*(theta_src-theta_rec);
+  return s;
+}
+
+float AcousticPath::calcThetaRec(float z_src, float z_rec, float theta_src){
+  float c_rec = calcC(z_rec);
+  float c_src = calcC(z_src);
+  return acos(c_rec/c_src*cos(theta_src));
+}
+
+//Calculte r from theta and arc length
+//r(s) = R(sin(theta_src)+sin(s/R - theta_src))
+float AcousticPath::calc_r(float theta_src,float s, float R){
+  return R*(sin(theta_src)+sin(s/R-theta_src));
+}
+
+float AcousticPath::calcJ(float s, float theta_src, float d_theta, float R){
+  float r_i=calc_r(theta_src,s,R);
+  float r_i1=calc_r(theta_src+d_theta,s,R);
+  return ((r_i)/sin(theta_src))*((r_i1-r_i)/d_theta);
+}
+
+float AcousticPath::calcPfromArcLength(float z_src, float z_rec, float J, float theta_src){
+  float temp = std::abs((calcC(z_rec)*cos(theta_src))/(calcC(z_src)*J));
+  return 1/(4*PI_KR)*sqrt(temp);
+
+}
+
+float AcousticPath::calcTransmissionLoss(float theta_src, float z_src, float z_rec, float R, float d_theta){
+  float theta_rec = calcThetaRec(z_src, z_rec, theta_src);
+  float s = calcArcLength(R,theta_src, theta_rec);
+  float J = calcJ(s,theta_src,d_theta, R);
+  float P_of_s = calcPfromArcLength(z_src, z_rec, J, theta_src);
+  float P_1 = 1/(4*PI_KR);
+  float TL = -20*log10(P_of_s/P_1);
+  return TL;
+
+}
 ////////////////////////////////////////////////////////////////////////////
 
 

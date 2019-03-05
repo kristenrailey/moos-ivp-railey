@@ -140,6 +140,11 @@ bool CommunicationAngle::Iterate()
       //Calculate steering angle
       m_theta_src = m_acoustic_path.calcThetaSrc(m_R_bisect,m_z_src);
       std::cout<<"Steering angle: "<<m_theta_src<<std::endl;
+
+      //Calculate TL
+      m_d_theta = 0.001;
+      m_TL = m_acoustic_path.calcTransmissionLoss(m_theta_src, m_z_src,m_z_rec, m_R_bisect, m_d_theta);
+
       //Notify angle and TL with ACOUSTIC_PATH
       stringstream ss;
       ss<<"elev_angle = "<<m_theta_src<<", transmission loss: "<<", id = krailey@mit.edu";
