@@ -49,13 +49,11 @@ bool CommunicationAngle::OnNewMail(MOOSMSG_LIST &NewMail)
   
 
     if (key == "NAV_X"){
-      //   m_r_src = dval;
       m_x_src = dval;
       m_nav_x = true;
     }
 
     else if (key == "NAV_Y"){
-      //   m_r_src = dval;
       m_y_src = dval;
       m_nav_y = true;
     }
@@ -120,8 +118,6 @@ bool CommunicationAngle::Iterate()
     m_r_src = 0.0;
     m_r_rec = m_acoustic_path.calcProj_r(m_x_rec,m_y_rec,m_x_src,m_y_src);
     
-    std::cout<<"Current source and receiver positions: " <<std::endl;
-    std::cout<<"r_src: "<<m_r_src<<", z_src: "<<m_z_src<<", r_rec"<<m_r_rec<<", s_rec: "<<m_z_rec<<std::endl;
    //Find circle equation, given source and receiver position
     m_midpt_r=m_acoustic_path.calcMidpt(m_r_src,m_r_rec);
     m_midpt_z=m_acoustic_path.calcMidpt(m_z_src,m_z_rec);
@@ -129,7 +125,6 @@ bool CommunicationAngle::Iterate()
     m_int_b=m_acoustic_path.calcPerpIntercept(m_int_slope, m_midpt_r,m_midpt_z);
     m_circ_z_center=m_acoustic_path.calcCircCenter_z();
     m_circ_r_center = m_acoustic_path.calcCircCenter_r(m_circ_z_center, m_int_slope, m_int_b);
-    std::cout<<"circle center (r,z): "<<m_circ_r_center<<","<<m_circ_z_center<<std::endl;
     m_R_bisect = m_acoustic_path.calcRBisect(m_r_src,m_z_src,m_circ_r_center,m_circ_z_center);
   
     //Check if valid R.   
@@ -140,15 +135,14 @@ bool CommunicationAngle::Iterate()
       //Calculate steering angle
       m_theta_src = m_acoustic_path.calcThetaSrc(m_R_bisect,m_z_src);
       m_theta_src_deg = m_acoustic_path.convertRad2Degrees(m_theta_src);
-      std::cout<<"Steering angle: (rad) "<<m_theta_src<<", (deg)"<<m_theta_src_deg<<std::endl;
 
       //Calculate TL
-      m_d_theta = 0.0000001;
+      m_d_theta = 0.0001;
       m_TL = m_acoustic_path.calcTransmissionLoss(m_theta_src, m_z_src,m_z_rec, m_R_bisect, m_d_theta);
 
       //Notify angle and TL with ACOUSTIC_PATH
       stringstream ss;
-      ss<<"elev_angle = "<<m_theta_src<<", transmission loss: "<<m_TL<<", id = krailey@mit.edu";
+      ss<<"elev_angle = "<<m_theta_src_deg<<", transmission loss: "<<m_TL<<", id = krailey@mit.edu";
       Notify("ACOUSTIC_PATH",ss.str());
       }
     else{
@@ -157,11 +151,11 @@ bool CommunicationAngle::Iterate()
       m_circ_r_center_new=m_acoustic_path.calcNewCircCenter_r(m_z_rec, m_r_rec,m_R_new,m_circ_z_center);
       //Recalculate position, keep depth (z_src)
       m_r_src_new= m_acoustic_path.calcPosOnCirc_r(m_circ_z_center, m_circ_r_center_new,m_z_src, m_R_new);
-      std::cout<<"Recalculated new position; m_R_bisect: "<<m_R_bisect<<", m_R_new"<<m_R_new<<"circ r pos: "<<m_circ_r_center_new<<", r pos: "<<m_r_src_new<<std::endl;
+
+      // x=xxx.xxx,y=yyy.yyy,depth=ddd.d,id=user@mit.edu.
     }
   }
   else{
-    std::cout<<"Waiting for all datapoints"<<std::endl;
   }
 
   return(true);
@@ -181,10 +175,9 @@ bool CommunicationAngle::OnStartUp()
       string original_line = *p;
       string param = stripBlankEnds(toupper(biteString(*p, '=')));
       string value = stripBlankEnds(*p);
-      std::cout<<"param: "<<param<<std::endl;
-      //Convert value to float
+      //Convert value to double
       stringstream temp(value);
-      float fvalue = 0;
+      double fvalue = 0;
       temp >> fvalue;
       
       if(param == "SURFACE_SOUND_SPEED") {
