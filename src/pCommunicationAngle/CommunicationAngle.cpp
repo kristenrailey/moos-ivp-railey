@@ -117,7 +117,8 @@ bool CommunicationAngle::Iterate()
     //Calculate r_src, r_rec
     m_r_src = 0.0;
     m_r_rec = m_acoustic_path.calcProj_r(m_x_rec,m_y_rec,m_x_src,m_y_src);
-    
+    m_r_theta = m_acoustic_path.calcProj_theta(m_x_rec,m_y_rec, m_x_src, m_y_src);
+
    //Find circle equation, given source and receiver position
     m_midpt_r=m_acoustic_path.calcMidpt(m_r_src,m_r_rec);
     m_midpt_z=m_acoustic_path.calcMidpt(m_z_src,m_z_rec);
@@ -137,7 +138,7 @@ bool CommunicationAngle::Iterate()
       m_theta_src_deg = m_acoustic_path.convertRad2Degrees(m_theta_src);
 
       //Calculate TL
-      m_d_theta = 0.0001;
+      m_d_theta = 0.0000001;
       m_TL = m_acoustic_path.calcTransmissionLoss(m_theta_src, m_z_src,m_z_rec, m_R_bisect, m_d_theta);
 
       //Notify angle and TL with ACOUSTIC_PATH
@@ -151,7 +152,14 @@ bool CommunicationAngle::Iterate()
       m_circ_r_center_new=m_acoustic_path.calcNewCircCenter_r(m_z_rec, m_r_rec,m_R_new,m_circ_z_center);
       //Recalculate position, keep depth (z_src)
       m_r_src_new= m_acoustic_path.calcPosOnCirc_r(m_circ_z_center, m_circ_r_center_new,m_z_src, m_R_new);
+      m_x_new = m_r_src_new*cos(m_r_theta);
+      m_y_new = m_r_src_new*sin(m_r_theta);
 
+      //Notify new position
+      stringstream newposition;
+      newposition<<"x="<<m_x_new<<",y="<<m_y_new<<",depth="<<m_z_src<<",id=krailey@mit.edu";
+      Notify("CONNECTIVITY_LOCATION",newposition.str());
+      Notify("ACOUSTIC_PATH","Nan");
       // x=xxx.xxx,y=yyy.yyy,depth=ddd.d,id=user@mit.edu.
     }
   }

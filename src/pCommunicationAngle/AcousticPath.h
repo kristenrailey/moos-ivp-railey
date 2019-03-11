@@ -21,6 +21,8 @@ class AcousticPath
   void setSoundSpeedGrad(double gradient){m_gradient= gradient;};
   //Calculation functions for Acoustic Path
   double calcProj_r(double x_rec,double y_rec, double x_src, double y_src);
+  double calcProj_theta(double x_rec,double y_rec, double x_src, double y_src);
+
   double calcC(double z);
   double calcMidpt(double r_1,double r_2);
   double calcPerpSlope(double r_1,double z_1, double r_2, double z_2);
