@@ -1,0 +1,177 @@
+/************************************************************/
+/*    NAME: Kristen Railey                                              */
+/*    ORGN: MIT                                             */
+/*    FILE: PointAssign.cpp                                        */
+/*    DATE:                                                 */
+/************************************************************/
+
+#include <iterator>
+#include "MBUtils.h"
+#include "PointAssign.h"
+
+using namespace std;
+
+//---------------------------------------------------------
+// Constructor
+
+PointAssign::PointAssign()
+{
+}
+
+//---------------------------------------------------------
+// Destructor
+
+PointAssign::~PointAssign()
+{
+}
+
+//---------------------------------------------------------
+// Procedure: OnNewMail
+
+bool PointAssign::OnNewMail(MOOSMSG_LIST &NewMail)
+{
+  MOOSMSG_LIST::iterator p;
+   
+  for(p=NewMail.begin(); p!=NewMail.end(); p++) {
+    CMOOSMsg &msg = *p;
+    string key   = msg.GetKey();
+    string sval  = msg.GetString(); 
+
+
+    if (key=="VISIT_POINT"){
+      if ((sval=="firstpoint")||(sval=="lastpoint")){
+	std::cout<<"first or last point"<<std::endl;
+      }
+      else{
+	m_visit_points.push_back(sval);
+      }
+    }
+
+#if 0 // Keep these around just for template
+    string key   = msg.GetKey();
+    string comm  = msg.GetCommunity();
+    double dval  = msg.GetDouble();
+    string sval  = msg.GetString(); 
+    string msrc  = msg.GetSource();
+    double mtime = msg.GetTime();
+    bool   mdbl  = msg.IsDouble();
+    bool   mstr  = msg.IsString();
+#endif
+   }
+	
+   return(true);
+}
+
+//---------------------------------------------------------
+// Procedure: OnConnectToServer
+
+bool PointAssign::OnConnectToServer()
+{
+   // register for variables here
+   // possibly look at the mission file?
+   // m_MissionReader.GetConfigurationParam("Name", <string>);
+   // m_Comms.Register("VARNAME", 0);
+	
+   RegisterVariables();
+   return(true);
+}
+
+//---------------------------------------------------------
+// Procedure: Iterate()
+//            happens AppTick times per second
+
+bool PointAssign::Iterate()
+{
+  //Loop through list of points and alternate assignment
+  if (m_assign_by_region ==false){
+    
+    std::vector<std::string>::const_iterator i = m_vname_list.begin();
+
+    for (std::vector<std::string>::const_iterator k = m_visit_points.begin(); k != m_visit_points.end(); ++k){
+      
+	stringstream ss;
+	ss<<"VISIT_POINT_"<<*i;
+	Notify(ss.str(),*k);
+	++i;
+	if (i==m_vname_list.end()){
+	  i=m_vname_list.begin();
+	}	     
+    }
+  }
+  else{ //Assign by region
+
+    for (std::vector<std::string>::const_iterator k = m_visit_points.begin(); k != m_visit_points.end(); ++k){
+       string x_str = tokStringParse(*k, "x", ',', '=');
+       double x_double = 0.0;
+       stringstream rr;
+       rr<<x_str;
+       rr>>x_double;
+       bool is_east = PointRegionIsEast(x_double);
+       std::cout<<"x double : "<<x_double<<std::endl;
+       
+       if (is_east){
+	 	stringstream vv;
+		vv<<"VISIT_POINT_"<<m_vname_list[0];
+		Notify(vv.str(),*k);       	
+       }
+       else{
+	 	stringstream vv;
+		vv<<"VISIT_POINT_"<<m_vname_list[1];
+		Notify(vv.str(),*k);  
+	
+       }
+    }
+  }
+  return(true);
+}
+
+//---------------------------------------------------------
+// Procedure: OnStartUp()
+//            happens before connection is open
+
+bool PointAssign::OnStartUp()
+{
+  list<string> sParams;
+  m_MissionReader.EnableVerbatimQuoting(false);
+  if(m_MissionReader.GetConfiguration(GetAppName(), sParams)) {
+    list<string>::iterator p;
+    for(p=sParams.begin(); p!=sParams.end(); p++) {
+      string original_line = *p;
+      string param = stripBlankEnds(toupper(biteString(*p, '=')));
+      string value = stripBlankEnds(*p);
+         std::cout<<"param: "<<param<<std::endl;
+      if(param == "VNAME") {
+        //add to vehicle list of names
+		m_vname_list.push_back(value);
+      }
+      else if(param == "ASSIGN_BY_REGION") {
+	if (value=="true"){
+	  m_assign_by_region = true;
+	}
+	else{
+	  m_assign_by_region = false;
+	}
+      }
+    }
+  }
+  
+  RegisterVariables();	
+  return(true);
+}
+
+//---------------------------------------------------------
+// Procedure: RegisterVariables
+
+void PointAssign::RegisterVariables()
+{
+  // Register("FOOBAR", 0);
+  Register("VISIT_POINT",0);
+}
+
+
+//--------------------------------------------------
+
+bool PointAssign::PointRegionIsEast(double x_val){
+  return (x_val<100.0);
+
+}
