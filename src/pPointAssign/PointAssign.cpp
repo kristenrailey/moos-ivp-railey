@@ -23,6 +23,9 @@ using namespace std;
 
 PointAssign::PointAssign()
 {
+  m_reached_first_point = false;
+  m_reached_last_point = false;
+  m_notified_all = false;
 }
 
 //---------------------------------------------------------
@@ -46,11 +49,17 @@ bool PointAssign::OnNewMail(MOOSMSG_LIST &NewMail)
 
 
     if (key=="VISIT_POINT"){
-      if ((sval=="firstpoint")||(sval=="lastpoint")){
-	std::cout<<"first or last point"<<std::endl;
+      if (sval=="firstpoint"){
+	m_reached_first_point = true;
+	std::cout<<"reached first point"<<std::endl;
       }
-      else{
+      else if (sval == "lastpoint"){
+	m_reached_last_point = true;
+	std::cout<<"reached last point"<<std::endl;
+      }
+      else if (m_reached_first_point==true && m_reached_last_point ==false){
 	m_visit_points.push_back(sval);
+	std::cout<<"added point to visit points"<<std::endl;
       }
     }
 
@@ -64,7 +73,7 @@ bool PointAssign::OnNewMail(MOOSMSG_LIST &NewMail)
     bool   mdbl  = msg.IsDouble();
     bool   mstr  = msg.IsString();
 #endif
-   }
+  }
 	
    return(true);
 }
@@ -89,6 +98,9 @@ bool PointAssign::OnConnectToServer()
 
 bool PointAssign::Iterate()
 {
+  //Only iterate if first and last points
+  std::cout<<"notified all: "<<m_notified_all<<std::endl;
+  if (m_reached_first_point == true && m_reached_last_point == true && m_notified_all ==false){
   //Loop through list of points and alternate assignment
   if (m_assign_by_region ==false){
     
@@ -126,6 +138,9 @@ bool PointAssign::Iterate()
 	Notify(ss.str(),*k);
 	postViewPoint(x_double, y_double,id_str, color_label_str);
     }
+    std::cout<<"finished looping through all points"<<std::endl;
+    m_notified_all = true;
+
   }
   else{ //Assign by region
 
@@ -160,8 +175,12 @@ bool PointAssign::Iterate()
 	
        }
     }
+    std::cout<<"finished looping through all points"<<std::endl;
+    m_notified_all = true;
   }
   return(true);
+  
+  }
 }
 
 //---------------------------------------------------------
@@ -170,6 +189,7 @@ bool PointAssign::Iterate()
 
 bool PointAssign::OnStartUp()
 {
+  Notify("UTS_PAUSE","false");
   list<string> sParams;
   m_MissionReader.EnableVerbatimQuoting(false);
   if(m_MissionReader.GetConfiguration(GetAppName(), sParams)) {

@@ -41,6 +41,9 @@ class PointAssign : public CMOOSApp
    std::vector<std::string> m_visit_points;
    bool m_assign_by_region;
    std::string m_vname_str;
+   bool m_reached_first_point;
+   bool m_reached_last_point;
+   bool m_notified_all;
  private: // State variables
 };
 
