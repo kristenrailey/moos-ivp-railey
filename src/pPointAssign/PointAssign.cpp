@@ -8,6 +8,13 @@
 #include <iterator>
 #include "MBUtils.h"
 #include "PointAssign.h"
+#include "MOOS/libMOOS/Utils/MOOSUtils.h"
+#include "XYPoint.h"
+#include "MBUtils.h"
+#include "GeomUtils.h"
+#include "XYObject.h" 
+
+
 
 using namespace std;
 
@@ -85,39 +92,67 @@ bool PointAssign::Iterate()
   //Loop through list of points and alternate assignment
   if (m_assign_by_region ==false){
     
-    std::vector<std::string>::const_iterator i = m_vname_list.begin();
-
+    //  std::vector<std::string>::const_iterator i = m_vname_list.begin();
+    int i = 0;
     for (std::vector<std::string>::const_iterator k = m_visit_points.begin(); k != m_visit_points.end(); ++k){
-      
+
+      std::string x_str = tokStringParse(*k, "x", ',', '=');
+      std::string y_str = tokStringParse(*k, "y", ',', '=');
+      std::string id_str = tokStringParse(*k,"id",',','=');
+
+       double x_double = 0.0;
+       double y_double = 0.0;
+       stringstream rr;
+       stringstream ww;
+       rr<<x_str;
+       ww<<y_str;
+       rr>>x_double;
+       ww>>y_double;
+       
+      if (i==0){
+	m_vname_str="HENRY";
+	i=1;
+      }
+      else{
+	m_vname_str="GILDA";
+	i=0;
+      }
 	stringstream ss;
-	ss<<"VISIT_POINT_"<<*i;
+	ss<<"VISIT_POINT_"<<m_vname_str;
 	Notify(ss.str(),*k);
-	++i;
-	if (i==m_vname_list.end()){
-	  i=m_vname_list.begin();
-	}	     
+	postViewPoint(x_double, y_double,id_str, "red");
     }
   }
   else{ //Assign by region
 
     for (std::vector<std::string>::const_iterator k = m_visit_points.begin(); k != m_visit_points.end(); ++k){
-       string x_str = tokStringParse(*k, "x", ',', '=');
+      std::string x_str = tokStringParse(*k, "x", ',', '=');
+      std::string y_str = tokStringParse(*k, "y", ',', '=');
+      std::string id_str = tokStringParse(*k,"id",',','=');
        double x_double = 0.0;
+       double y_double = 0.0;
        stringstream rr;
+       stringstream ww;
        rr<<x_str;
+       ww<<y_str;
        rr>>x_double;
+       ww>>y_double;
+       
        bool is_east = PointRegionIsEast(x_double);
-       std::cout<<"x double : "<<x_double<<std::endl;
        
        if (is_east){
 	 	stringstream vv;
 		vv<<"VISIT_POINT_"<<m_vname_list[0];
-		Notify(vv.str(),*k);       	
+		Notify(vv.str(),*k);
+		postViewPoint(x_double, y_double, id_str, "red");
+
        }
        else{
 	 	stringstream vv;
 		vv<<"VISIT_POINT_"<<m_vname_list[1];
-		Notify(vv.str(),*k);  
+		Notify(vv.str(),*k);
+		postViewPoint(x_double, y_double, id_str, "yellow");
+
 	
        }
     }
@@ -173,5 +208,22 @@ void PointAssign::RegisterVariables()
 
 bool PointAssign::PointRegionIsEast(double x_val){
   return (x_val<100.0);
+
+}
+
+//----------------------------------------------------
+
+void PointAssign::postViewPoint(double x, double y, string label, string color){
+ {
+   XYPoint point(x, y);
+   point.set_label(label);
+   point.set_label_color(color);
+   point.set_color("vertex", color);
+   point.set_param("vertex_size", "5");
+
+   string spec = point.get_spec();
+   Notify("VIEW_POINT", spec);
+ }
+
 
 }

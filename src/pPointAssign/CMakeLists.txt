@@ -12,8 +12,10 @@ SET(SRC
 ADD_EXECUTABLE(pPointAssign ${SRC})
 
 TARGET_LINK_LIBRARIES(pPointAssign
-   ${MOOS_LIBRARIES}
+  ${MOOS_LIBRARIES}
+   geometry
    mbutil
+   apputil
    m
    pthread)
 
