@@ -104,23 +104,27 @@ bool PointAssign::Iterate()
        double y_double = 0.0;
        stringstream rr;
        stringstream ww;
+       
        rr<<x_str;
        ww<<y_str;
        rr>>x_double;
        ww>>y_double;
+       std::string color_label_str;
        
       if (i==0){
 	m_vname_str="HENRY";
 	i=1;
+	color_label_str = "red";
       }
       else{
 	m_vname_str="GILDA";
 	i=0;
+	color_label_str= "yellow";
       }
 	stringstream ss;
 	ss<<"VISIT_POINT_"<<m_vname_str;
 	Notify(ss.str(),*k);
-	postViewPoint(x_double, y_double,id_str, "red");
+	postViewPoint(x_double, y_double,id_str, color_label_str);
     }
   }
   else{ //Assign by region
