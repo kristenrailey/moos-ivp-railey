@@ -37,9 +37,11 @@ ProcessConfig = uFldShoreBroker
   QBRIDGE  = DEPLOY, NODE_REPORT
   QBRIDGE  = STATION_KEEP, APPCAST_REQ
   QBRIDGE  = MOOS_MANUAL_OVERRIDE
-
+  QBRIDGE  = VISIT_POINT
   BRIDGE   = src=RETURN_ALL, alias=RETURN
   BRIDGE   = src=RETURN_$V,  alias=RETURN
+ // BRIDGE   = src=VISIT_POINT_HENRY, alias=VISIT_POINT
+//  BRIDGE   = src=VISIT_POINT_GILDA, alias=VISIT_POINT
 }
 
 //--------------------------------------------------------
