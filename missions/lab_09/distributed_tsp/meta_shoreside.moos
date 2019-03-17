@@ -19,7 +19,7 @@ Processconfig = ANTLER
   Run = pHostInfo       @ NewConsole = false
   Run = uFldShoreBroker @ NewConsole = false
   Run = uTimerScript	@ NewConsole = false
-  Run = pPointAssign	@ NewConsole = true
+  Run = pPointAssign	@ NewConsole = false
 }
 
 #include plug_pShare.moos
@@ -83,6 +83,8 @@ ProcessConfig = pMarineViewer
  ProcessConfig = uTimerScript                                    
 {
  //  name = random_points_generated
+   paused = true
+   pause_var = UTS_PAUSE
    
    rand_var    = varname=RND_VAL_X, min=-25, max=200, key=at_post
    rand_var 	 = varname=RND_VAL_Y, min=-175, max=-25, key=at_post
@@ -100,6 +102,6 @@ ProcessConfig = pPointAssign
 {
   vname = HENRY
   vname = GILDA
-  assign_by_region = true
+  assign_by_region = false
 
 }

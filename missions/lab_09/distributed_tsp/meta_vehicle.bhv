@@ -4,7 +4,10 @@
 initialize   DEPLOY  = true
 initialize   RETURN  = false
 initialize   STATION_KEEP = false
-initialize   LOITER  = true
+initialize   LOITER  = false
+initialize   SEARCH = false
+initialize   REFUEL_NEEDED = false
+initialize   AT_START_PT = false
 
 set MODE = ACTIVE {
   DEPLOY = true
@@ -20,12 +23,30 @@ set MODE = RETURNING {
   RETURN = true
 } 
 
+
+set MODE = RETURNING_REFUEL {
+  MODE = ACTIVE
+  REFUEL_NEEDED = true
+  AT_START_PT = false
+}
+
 set MODE = LOITERING {
   MODE = ACTIVE
   LOITER = true
+}
+set MODE = REFUELING {
+  MODE = ACTIVE
+  REFUEL_NEEDED = true
+  AT_START_PT = true
 } 
 
 
+
+set MODE = SEARCHING {
+  MODE = ACTIVE
+  SEARCH = true
+
+}
 //----------------------------------------------
 Behavior = BHV_Loiter
 {
@@ -76,4 +97,84 @@ Behavior = BHV_StationKeep
      transit_speed = 1.3
         swing_time = 7
       visual_hints = vertex_size=0, edge_color=gray50
+}
+
+//---------------------------------------------
+Behavior = BHV_Waypoint
+{
+  name = search_points
+  pwt = 100
+  condition = MODE==SEARCHING
+  updates = TRANSIT_UPDATES
+    // Parameters specific to this behavior
+   // ------------------------------------
+      capture_radius = 3                       // default
+        capture_line = false                   // default
+       //   cycle_flag = COMMS_NEEDED=true       // example
+     //           lead = -1                      // default
+    //     lead_damper = -1                      // default
+       lead_to_start = false                   // default
+               order = normal                  // default 
+          //    points = pts={-200,-200:30,-60}  // example
+              repeat = 0                       // default
+         slip_radius = 15                      // default
+               speed = 1.2                     // default is zero
+             wptflag = HITPTS = $(X),$(Y)      // example     
+
+        visual_hints = vertex_size  = 3             // default
+        visual_hints = edge_size    = 1             // default
+        visual_hints = vertex_color = dodger_blue   // default
+        visual_hints = edge_color   = white         // default
+        visual_hints = nextpt_color = yellow        // default
+        visual_hints = nextpt_lcolor = aqua         // default
+        visual_hints = nextpt_vertex_size = 5       // default
+ 
+
+
+
+}
+
+//----------------------------------------------
+Behavior = BHV_Waypoint
+{
+  name      = refuel_return
+  pwt       = 100
+  condition = MODE==RETURNING_REFUEL
+  endflag   = AT_START_PT = true
+  perpetual = true
+
+      speed = 1.2
+     radius = 3.0
+  nm_radius = 15.0
+     points = $(START_POS)
+       lead = 8
+}
+
+//--------------------------------------------------
+Behavior = BHV_Timer
+{
+  name = bhv_refuel
+  condition = MODE == REFUELING
+  duration =60
+  duration_idle_decay= false
+  perpetual = true
+  endflag = REFUEL_NEEDED = false
+  endflag = AT_START_PT = false
+  endflag = SEARCH = true
+
+}
+
+//------------------------------------------------
+//10 min. before refuel needed
+Behavior = BHV_Timer
+{
+  name = no_refuel_needed
+  condition = MODE == SEARCH
+  duration =600
+  duration_idle_decay= false
+  perpetual = true
+  endflag = REFUEL_NEEDED = true
+  endflag = AT_START_PT = false
+  endflag = SEARCH = false
+
 }
