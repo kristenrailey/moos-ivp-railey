@@ -45,6 +45,7 @@ set MODE = REFUELING {
 set MODE = SEARCHING {
   MODE = ACTIVE
   SEARCH = true
+  REFUEL_NEEDED = false
 
 }
 //----------------------------------------------
@@ -119,7 +120,7 @@ Behavior = BHV_Waypoint
               repeat = 0                       // default
          slip_radius = 15                      // default
                speed = 1.2                     // default is zero
-             wptflag = HITPTS = $(X),$(Y)      // example     
+    //         wptflag = HITPTS = $(X),$(Y)      // example     
 
         visual_hints = vertex_size  = 3             // default
         visual_hints = edge_size    = 1             // default
@@ -169,7 +170,7 @@ Behavior = BHV_Timer
 Behavior = BHV_Timer
 {
   name = no_refuel_needed
-  condition = MODE == SEARCH
+  condition = MODE == SEARCHING
   duration =600
   duration_idle_decay= false
   perpetual = true

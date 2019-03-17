@@ -102,6 +102,6 @@ ProcessConfig = pPointAssign
 {
   vname = HENRY
   vname = GILDA
-  assign_by_region = false
+  assign_by_region = true
 
 }
