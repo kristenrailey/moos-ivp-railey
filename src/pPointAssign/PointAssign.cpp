@@ -46,7 +46,7 @@ bool PointAssign::OnNewMail(MOOSMSG_LIST &NewMail)
     CMOOSMsg &msg = *p;
     string key   = msg.GetKey();
     string sval  = msg.GetString(); 
-
+   
 
     if (key=="VISIT_POINT"){
       if (sval=="firstpoint"){
@@ -98,20 +98,23 @@ bool PointAssign::OnConnectToServer()
 
 bool PointAssign::Iterate()
 {
-  //Only iterate if first and last points
+  // NVM: Only iterate if first and last points
   std::cout<<"notified all: "<<m_notified_all<<std::endl;
-  if (m_reached_first_point == true && m_reached_last_point == true && m_notified_all ==false){
+  //  if (m_reached_first_point == true && m_reached_last_point == true && m_notified_all == false){
+  //   if (m_reached_first_point == true && m_reached_last_point == true && m_notified_all == false){
+  //  if (m_reached_first_point == true && m_reached_last_point == true){
+
   //Loop through list of points and alternate assignment
   if (m_assign_by_region ==false){
     
     //  std::vector<std::string>::const_iterator i = m_vname_list.begin();
     int i = 0;
     for (std::vector<std::string>::const_iterator k = m_visit_points.begin(); k != m_visit_points.end(); ++k){
-
+      
       std::string x_str = tokStringParse(*k, "x", ',', '=');
       std::string y_str = tokStringParse(*k, "y", ',', '=');
       std::string id_str = tokStringParse(*k,"id",',','=');
-
+      std::cout<<"ID = "<<id_str<<std::endl;
        double x_double = 0.0;
        double y_double = 0.0;
        stringstream rr;
@@ -143,11 +146,12 @@ bool PointAssign::Iterate()
 
   }
   else{ //Assign by region
-
+    std::cout<<"Assigning by region"<<"size of visit points: "<<m_visit_points.size()<<std::endl;
     for (std::vector<std::string>::const_iterator k = m_visit_points.begin(); k != m_visit_points.end(); ++k){
       std::string x_str = tokStringParse(*k, "x", ',', '=');
       std::string y_str = tokStringParse(*k, "y", ',', '=');
       std::string id_str = tokStringParse(*k,"id",',','=');
+      std::cout<<"ID = "<<id_str<<std::endl;
        double x_double = 0.0;
        double y_double = 0.0;
        stringstream rr;
@@ -158,19 +162,23 @@ bool PointAssign::Iterate()
        ww>>y_double;
        
        bool is_east = PointRegionIsEast(x_double);
-       
+       std::cout<<"east: "<<is_east<<std::endl;
        if (is_east){
 	 	stringstream vv;
 		vv<<"VISIT_POINT_"<<m_vname_list[0];
+		std::cout<<vv.str()<<std::endl;
 		Notify(vv.str(),*k);
-		postViewPoint(x_double, y_double, id_str, "red");
+		std::cout<<"calling post view point"<<std::endl;
+		postViewPoint(x_double, y_double, id_str, "yellow");
 
        }
        else{
 	 	stringstream vv;
 		vv<<"VISIT_POINT_"<<m_vname_list[1];
+		std::cout<<vv.str()<<std::endl;
 		Notify(vv.str(),*k);
-		postViewPoint(x_double, y_double, id_str, "yellow");
+		std::cout<<"calling post view point"<<std::endl;
+		postViewPoint(x_double, y_double, id_str, "red");
 
 	
        }
@@ -178,9 +186,10 @@ bool PointAssign::Iterate()
     std::cout<<"finished looping through all points"<<std::endl;
     m_notified_all = true;
   }
-  return(true);
   
-  }
+  // }
+  return(true);
+
 }
 
 //---------------------------------------------------------
@@ -246,6 +255,7 @@ void PointAssign::postViewPoint(double x, double y, string label, string color){
    point.set_param("vertex_size", "5");
 
    string spec = point.get_spec();
+   std::cout<<"notifying view point"<<std::endl;
    Notify("VIEW_POINT", spec);
  }
 
