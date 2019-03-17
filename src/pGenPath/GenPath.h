@@ -32,6 +32,9 @@ class GenPath : public CMOOSApp
 
  private: // Configuration variables
    std::vector<std::string> m_visit_points;
+   std::vector<std::string> m_id_points;
+   bool m_all_points_mail;
+   bool m_all_points_posted;
  private: // State variables
 };
 

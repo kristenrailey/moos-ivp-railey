@@ -10,6 +10,8 @@
 #include "GenPath.h"
 #include "XYObject.h"
 #include "ColorPack.h"
+#include <algorithm>
+
 
 using namespace std;
 
@@ -18,6 +20,9 @@ using namespace std;
 
 GenPath::GenPath()
 {
+  m_all_points_mail = false;
+  m_all_points_posted = false;
+
 }
 
 //---------------------------------------------------------
@@ -40,7 +45,23 @@ bool GenPath::OnNewMail(MOOSMSG_LIST &NewMail)
     string sval  = msg.GetString(); 
 
     if (key == "VISIT_POINT"){
-      m_visit_points.push_back(sval);
+      std::string id_str = tokStringParse(sval, "id", ',', '=');
+    
+      
+      if(std::find(m_id_points.begin(), m_id_points.end(), id_str) != m_id_points.end()) {
+	/* v contains x */
+	std::cout<<"already have this point"<<std::endl;
+	m_all_points_mail=true;
+	  }
+      else {
+	/* v does not contain x */
+	 m_id_points.push_back(id_str);
+
+	 m_visit_points.push_back(sval);
+	 std::cout<<"added new point: "<<id_str<<std::endl;
+
+      }
+ 
     }
 
 
@@ -54,7 +75,7 @@ bool GenPath::OnNewMail(MOOSMSG_LIST &NewMail)
     bool   mdbl  = msg.IsDouble();
     bool   mstr  = msg.IsString();
 #endif
-   }
+  }
 	
    return(true);
 }
@@ -79,6 +100,7 @@ bool GenPath::OnConnectToServer()
 
 bool GenPath::Iterate()
 {
+  std::cout<<"starting iterate loop"<<std::endl;
   //Imaginary starting point
  double start_x = 0.0;
  double start_y = 0.0;
@@ -87,7 +109,11 @@ bool GenPath::Iterate()
  //List of points
  XYSegList my_seglist;
  
- while (m_visit_points.size()>0){
+ // while (m_visit_points.size()>0){
+ std::cout<<"mail rec: "<<m_all_points_mail<<"all posted: "<<m_all_points_posted<<std::endl;
+ if (m_all_points_mail==true && m_all_points_posted == false){
+   while (m_visit_points.size()>0){
+
     current_x=start_x;
     current_y=start_y;
     std::vector<std::string>::iterator current_k;
@@ -115,18 +141,26 @@ bool GenPath::Iterate()
 	current_y=y_double;
 	current_k=k;
       }
-    };
-    //Add to seglist. Pop off best value.Update start point. 
+    }
+    //Add to seglist. Pop off best value.Update start point.
+    std::cout<<"Current visit point size: "<<m_visit_points.size()<<std::endl;
+    std::cout<<"current min: "<<current_min<<std::endl;
     my_seglist.add_vertex(current_x,current_y);
     m_visit_points.erase(current_k);
     start_x = current_x;
     start_y = current_y;
     
-    
-  }
-  std::string updates_str = "points = ";
-  updates_str +=my_seglist.get_spec();
-  Notify("UPDATES_VAR",updates_str);
+   }
+    std::string updates_str = "points = ";
+    updates_str +=my_seglist.get_spec();
+    std::cout<<updates_str<<std::endl;
+    Notify("TRANSIT_UPDATES",updates_str);
+  
+    Notify("SEARCH","true");
+    m_all_points_posted = true;
+  
+ }
+
   return(true);
 }
 
@@ -153,6 +187,8 @@ bool GenPath::OnStartUp()
       }
     }
   }
+  std::cout<<"notified uts pause gen path"<<std::endl;
+  Notify("UTS_PAUSE_GENPATH","false");
   
   RegisterVariables();	
   return(true);
