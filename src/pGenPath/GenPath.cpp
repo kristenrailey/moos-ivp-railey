@@ -24,6 +24,7 @@ GenPath::GenPath()
   m_all_points_mail = false;
   m_all_points_posted = false;
   m_visit_radius = 0.0;
+  m_first_time = true;
 
   m_regenerate = false;
 }
@@ -213,6 +214,17 @@ bool GenPath::Iterate()
     Notify("TRANSIT_UPDATES",updates_str);
   
     Notify("SEARCH","true");
+
+    //If first time
+    if (m_first_time ==true){
+      Notify("FIRST_TIME","true");
+      m_first_time = false; //Next time will be revisit points
+    }
+    else{
+      Notify("GENPATH_REGENERATE","true");
+    }
+    //else
+    
     m_all_points_posted = true;
   
  }

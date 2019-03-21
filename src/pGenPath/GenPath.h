@@ -41,6 +41,7 @@ class GenPath : public CMOOSApp
    bool m_all_points_posted;
    double m_visit_radius;
    bool m_regenerate;
+   bool m_first_time;
    std::map<char,int> m_points_distances;
 
  private: // State variables
