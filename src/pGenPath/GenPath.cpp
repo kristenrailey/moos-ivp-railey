@@ -23,8 +23,9 @@ GenPath::GenPath()
 {
   m_all_points_mail = false;
   m_all_points_posted = false;
-  m_visit_radius = 0.0;
+  m_visit_radius = 4.0; //Change later
   m_first_time = true;
+  m_revisit_points_add = false;
 
   m_regenerate = false;
 }
@@ -44,7 +45,6 @@ bool GenPath::OnNewMail(MOOSMSG_LIST &NewMail)
   MOOSMSG_LIST::iterator p;
 
   for(p=NewMail.begin(); p!=NewMail.end(); p++) {
-    std::cout<<"receiving new mail"<<std::endl;
     CMOOSMsg &msg = *p;
     string key   = msg.GetKey();
     string sval  = msg.GetString(); 
@@ -66,34 +66,32 @@ bool GenPath::OnNewMail(MOOSMSG_LIST &NewMail)
     if (key == "WPT_STAT"){
        std::string dist_str = tokStringParse(sval,"dist",',','=');
        std::string index_str = tokStringParse(sval,"index",',','=');
-       std::cout<<"WPTSTATE received, value: "<<sval<<std::endl;
        // Change dist string to double
        double dist_double = 0.0;
+       int index_int = 0;
        stringstream dd;
+       stringstream ii;
        dd<<dist_str;
+       ii<<index_str;
        dd>>dist_double;
+       ii>>index_int;
 	   
-       int wpt_ii=0; //index tracker
-       
-       //check if id_str is in list already
-       std::cout<<"dist_str: "<<dist_str<<"index_str, "<<index_str<<std::endl;
-       std::cout<<"have index point: "<< ((std::find(m_index_points.begin(), m_index_points.end(), index_str))== m_index_points.end())<<std::endl;
-       
+       //    std::cout<<"wpt stat: "<<sval<<std::endl;
+       //check if id_str is in list already       
        if(std::find(m_index_points.begin(), m_index_points.end(), index_str) == m_index_points.end()){ //don't have index
-	 std::cout<<"don't have index, adding to list"<<std::endl;
-	 if (wpt_ii ==0){ // First value	
+	 if (index_int ==0){ // First value	
 	   m_dist_to_point.push_back(dist_double);
 	   m_index_points.push_back(index_str);
+	   // wpt_ii++;
 	 }
 	 else{ //Tracking new visit point
 	   m_dist_to_point.push_back(dist_double); //Add to list of distances
 	   m_index_points.push_back(index_str);
-	   wpt_ii++;
+	   //  wpt_ii++;
 	 }
        }
        else{ //Update distance for current wpt index
-	 std::cout<<"update dist, size: "<<m_dist_to_point.size()<<", index: "<<wpt_ii<<std::endl;
-	 m_dist_to_point[wpt_ii] = dist_double;
+	 m_dist_to_point[index_int] = dist_double;
          }
        
     }
@@ -145,24 +143,29 @@ bool GenPath::OnConnectToServer()
 
 bool GenPath::Iterate()
 {
-  std::cout<<"starting iterate loop"<<std::endl;
-  // Add points to visit list if distance is less than N
+
+  if (m_regenerate==true){
+      // Add points to visit list if distance is less than N
     int temp_index=0;
-  for (std::vector<double>::iterator k = m_dist_to_point.begin(); k != m_dist_to_point.end(); ++k){
-    std::cout<<"loop 1"<<std::endl;
-    if (*k>m_visit_radius){ //Miss
-      m_revisit_points.push_back(m_points_ordered[temp_index]);
-      temp_index++;
-    }
-    else{ //Hit
-      temp_index++;
-    }
+    for (std::vector<double>::iterator k = m_dist_to_point.begin(); k != m_dist_to_point.end(); ++k){
+      std::cout<<"dist: "<<*k<<", "<<m_visit_radius<<std::endl;
+      if (*k>m_visit_radius){ //Miss
+	m_revisit_points.push_back(m_points_ordered[temp_index]);
+	temp_index++;
+      }
+      else{ //Hit
+	temp_index++;
+      }
   }
   
-  if (m_regenerate==true){
     //Add revisit points to visit points
-    std::cout<<"if statement"<<std::endl;
+    //   std::cout<<"if statement"<<std::endl;
     m_visit_points.insert(m_visit_points.end(), m_revisit_points.begin(), m_revisit_points.end());
+        std::cout<<"size of visit point list: "<<m_visit_points.size()<<std::endl;
+       std::cout<<"size of revisit points: "<<m_revisit_points.size()<<std::endl;
+    m_regenerate = false; //Added this
+    m_all_points_posted = false;
+    m_revisit_points_add = true;
 
   }
   
@@ -175,11 +178,10 @@ bool GenPath::Iterate()
 
  //List of points
  XYSegList my_seglist;
- 
- if (m_all_points_mail==true && m_all_points_posted == false){
-   std::cout<<"loop 2 "<<m_visit_points.size()<<std::endl;
+ std::cout<<"all points posted: "<<m_all_points_posted<<std::endl;
+ if ((m_all_points_mail==true && m_all_points_posted == false)||(m_revisit_points_add ==true)){
+   //   std::cout<<"loop 2 "<<m_visit_points.size()<<std::endl;
    while (m_visit_points.size()>0){
-
     current_x=start_x;
     current_y=start_y;
     std::vector<std::string>::iterator current_k;
@@ -213,20 +215,20 @@ bool GenPath::Iterate()
     //Add to seglist. Pop off best value.Update start point.
 
     my_seglist.add_vertex(current_x,current_y);
-    std::cout<<"visit points size: "<<m_visit_points.size()<<std::endl;
+    //   std::cout<<"visit points size: "<<m_visit_points.size()<<std::endl;
     m_points_ordered.push_back(current_visit_point_str); //Added this
-    std::cout<<"current k value: "<<*current_k<<std::endl;
+    //    std::cout<<"current k value: "<<*current_k<<std::endl;
     m_visit_points.erase(current_k); //Updated for generating path to traverse
     start_x = current_x;
     start_y = current_y;
     
     
    }
-   std::cout<<"Sending updates"<<std::endl;
+   //   std::cout<<"Sending updates"<<std::endl;
     std::string updates_str = "points = ";
     updates_str +=my_seglist.get_spec();
     Notify("TRANSIT_UPDATES",updates_str);
-  
+    std::cout<<"new notification: "<<updates_str<<std::endl;
     Notify("SEARCH","true");
 
     //If first time
@@ -240,6 +242,7 @@ bool GenPath::Iterate()
     //else
     
     m_all_points_posted = true;
+    m_regenerate = true; // Added this
   
  }
   
