@@ -24,8 +24,10 @@ GenPath::GenPath()
   m_all_points_mail = false;
   m_all_points_posted = false;
   m_visit_radius = 4.0; //Change later
-  m_first_time = true;
-  m_revisit_points_add = false;
+  m_first_time = false;
+  m_first_time_regen = false;
+  m_finished_search = false;
+  //  m_revisit_points_add = false;
 
   m_regenerate = false;
 }
@@ -99,12 +101,35 @@ bool GenPath::OnNewMail(MOOSMSG_LIST &NewMail)
     if (key=="GENPATH_REGENERATE"){
       if (sval =="true"){
 	m_regenerate = true;
+	std::cout<<"received regen is true"<<std::endl;
       }
       else{
 	m_regenerate = false;
       }
     }
 
+    if (key=="FINISHED_SEARCH"){
+      if (sval =="true"){
+	m_finished_search = true;
+	std::cout<<"received finishedsearch  is true"<<std::endl;
+      }
+      else{
+	m_finished_search = false;
+	std::cout<<"recevied finished search is false"<<std::endl;
+      }
+    }
+
+    
+    if (key=="FIRST_TIME_REGEN"){
+      if (sval =="true"){
+	m_first_time_regen = true;
+	std::cout<<"first time regen is true"<<std::endl;
+      }
+      else{
+	m_first_time_regen = false;
+      }
+    }
+    
        
 
 
@@ -144,109 +169,151 @@ bool GenPath::OnConnectToServer()
 bool GenPath::Iterate()
 {
 
-  if (m_regenerate==true){
+  if ((m_all_points_mail==true && m_all_points_posted == false)){
+    m_first_time = true;
+  }
+
+  if (m_first_time==false){   
+    if (m_regenerate==true){
+      
       // Add points to visit list if distance is less than N
-    int temp_index=0;
-    for (std::vector<double>::iterator k = m_dist_to_point.begin(); k != m_dist_to_point.end(); ++k){
-      std::cout<<"dist: "<<*k<<", "<<m_visit_radius<<std::endl;
-      if (*k>m_visit_radius){ //Miss
-	m_revisit_points.push_back(m_points_ordered[temp_index]);
-	temp_index++;
+      int temp_index=0;
+      std::cout<<"size of dist to point: "<<m_dist_to_point.size()<<std::endl;
+      for (std::vector<double>::iterator k = m_dist_to_point.begin(); k != m_dist_to_point.end(); ++k){
+	//	std::cout<<"dist: "<<*k<<", minimum radius: "<<m_visit_radius<<std::endl;
+	if (*k>m_visit_radius){ //Miss
+	  m_revisit_points.push_back(m_points_ordered[temp_index]);
+	  m_revisit_points_add = true; //Added points
+	  temp_index++;
+	}
+	else{ //Hit
+	  temp_index++;
+	}
       }
-      else{ //Hit
-	temp_index++;
+      
+      //No missed points
+       std::cout<<"revisit points size: "<<m_revisit_points.size()<<std::endl;
+      //   std::cout<<"first time throgh revist: "<<m_first_time_regen<<std::endl;
+      if ((m_revisit_points.size()==0)&&(m_finished_search==true)){
+	Notify("RETURN","true");
+	Notify("SEARCH","false");
+	Notify("MISSED_POINTS","false");
+       	std::cout<<"Notified to return, finished search is true"<<std::endl;
+	m_regenerate = false;
+       	return (true);
       }
-  }
-  
-    //Add revisit points to visit points
-    //   std::cout<<"if statement"<<std::endl;
-    m_visit_points.insert(m_visit_points.end(), m_revisit_points.begin(), m_revisit_points.end());
-        std::cout<<"size of visit point list: "<<m_visit_points.size()<<std::endl;
-       std::cout<<"size of revisit points: "<<m_revisit_points.size()<<std::endl;
-    m_regenerate = false; //Added this
-    m_all_points_posted = false;
-    m_revisit_points_add = true;
-
-  }
-  
-  //Imaginary starting point
- double start_x = 0.0;
- double start_y = 0.0;
- double current_x, current_y;
- std::string current_visit_point_str;
-
-
- //List of points
- XYSegList my_seglist;
- std::cout<<"all points posted: "<<m_all_points_posted<<std::endl;
- if ((m_all_points_mail==true && m_all_points_posted == false)||(m_revisit_points_add ==true)){
-   //   std::cout<<"loop 2 "<<m_visit_points.size()<<std::endl;
-   while (m_visit_points.size()>0){
-    current_x=start_x;
-    current_y=start_y;
-    std::vector<std::string>::iterator current_k;
-    double current_min=10000.0;
-    double temp_dist = 0.0;
-        
-    //Iterate through points 
-    for (std::vector<std::string>::iterator k = m_visit_points.begin(); k != m_visit_points.end(); ++k){
-      //Get x, y positions from string
-      std::string x_str = tokStringParse(*k, "x", ',', '=');
-      std::string y_str = tokStringParse(*k, "y", ',', '=');
-      //   std::string id_str = tokStringParse(*k,"id",',','=');
-      double x_double = 0.0;
-      double y_double = 0.0;
-      stringstream rr;
-      stringstream ww;
-      rr<<x_str;
-      ww<<y_str;
-      rr>>x_double;
-      ww>>y_double;
-      //Calculate distance
-      temp_dist=sqrt(pow((x_double-start_x),2)+pow((y_double-start_y),2));
-      if (temp_dist<current_min){  // Check if less than current min, update
-	current_min=temp_dist;
-	current_x=x_double;
-	current_y=y_double;
-	current_k=k;
-	current_visit_point_str = *k;
+      else if ((m_revisit_points.size()>0)&&(m_finished_search==true)){
+      //Add revisit points to visit points
+	Notify("MISSED_POINTS","true");
+	m_visit_points.insert(m_visit_points.end(), m_revisit_points.begin(), m_revisit_points.end());     
+	m_revisit_points.clear(); //Clear revisit points
+	m_dist_to_point.clear();
+	m_index_points.clear();
+       	std::cout<<"finished a search, visit points"<<std::endl;
+      }
+      else if((m_revisit_points.size()>0)&&(m_first_time_regen==true)){
+	     //Add revisit points to visit points
+	Notify("MISSED_POINTS","true");
+	m_visit_points.insert(m_visit_points.end(), m_revisit_points.begin(), m_revisit_points.end());     
+	m_revisit_points.clear(); //Clear revisit points
+	m_dist_to_point.clear();
+	m_index_points.clear();
+	m_first_time_regen=false;
+       	std::cout<<"revisit points, first time"<<std::endl;
+      }
+      else if((m_revisit_points.size()==0)&&(m_first_time_regen==true)){
+	Notify("RETURN","true");
+	Notify("SEARCH","false");
+	Notify("MISSED_POINTS","false");
+       	std::cout<<"Notified to return, no missed points"<<std::endl;
+	m_regenerate = false;
+       	return (true);	
+      }
+      else{ //NOt finished, delete later
+	//	continue;
       }
     }
-    //Add to seglist. Pop off best value.Update start point.
+    else{
+        return (true);
+      //    std::cout<<"regen is not true"<<std::endl;
+    }
+  }
 
-    my_seglist.add_vertex(current_x,current_y);
-    //   std::cout<<"visit points size: "<<m_visit_points.size()<<std::endl;
-    m_points_ordered.push_back(current_visit_point_str); //Added this
-    //    std::cout<<"current k value: "<<*current_k<<std::endl;
-    m_visit_points.erase(current_k); //Updated for generating path to traverse
-    start_x = current_x;
-    start_y = current_y;
-    
-    
-   }
-   //   std::cout<<"Sending updates"<<std::endl;
+  if (m_visit_points.size()>0){
+    //Imaginary starting point
+    double start_x = 0.0;
+    double start_y = 0.0;
+    double current_x, current_y;
+    std::string current_visit_point_str;
+
+
+    //List of points
+    XYSegList my_seglist;
+  
+    while (m_visit_points.size()>0){
+      current_x=start_x;
+      current_y=start_y;
+      std::vector<std::string>::iterator current_k;
+      double current_min=10000.0;
+      double temp_dist = 0.0;
+        
+      //Iterate through points 
+      for (std::vector<std::string>::iterator k = m_visit_points.begin(); k != m_visit_points.end(); ++k){
+	//Get x, y positions from string
+	std::string x_str = tokStringParse(*k, "x", ',', '=');
+	std::string y_str = tokStringParse(*k, "y", ',', '=');
+	//   std::string id_str = tokStringParse(*k,"id",',','=');
+	double x_double = 0.0;
+	double y_double = 0.0;
+	stringstream rr;
+	stringstream ww;
+	rr<<x_str;
+	ww<<y_str;
+	rr>>x_double;
+	ww>>y_double;
+	//Calculate distance
+	temp_dist=sqrt(pow((x_double-start_x),2)+pow((y_double-start_y),2));
+	if (temp_dist<current_min){  // Check if less than current min, update
+	  current_min=temp_dist;
+	  current_x=x_double;
+	  current_y=y_double;
+	  current_k=k;
+	  current_visit_point_str = *k;
+	}
+      }
+      //Add to seglist. Pop off best value.Update start point.
+
+      my_seglist.add_vertex(current_x,current_y);
+      m_points_ordered.push_back(current_visit_point_str); //Added this
+      m_visit_points.erase(current_k); //Updated for generating path to traverse
+      start_x = current_x;
+      start_y = current_y;   
+    }
     std::string updates_str = "points = ";
     updates_str +=my_seglist.get_spec();
-    Notify("TRANSIT_UPDATES",updates_str);
-    std::cout<<"new notification: "<<updates_str<<std::endl;
-    Notify("SEARCH","true");
 
     //If first time
     if (m_first_time ==true){
       Notify("FIRST_TIME","true");
+      Notify("TRANSIT_UPDATES_FIRST_TIME",updates_str);
+      Notify("SEARCH","true");
+      std::cout<<"sent notifications"<<std::endl;
+      m_all_points_posted = true;
       m_first_time = false; //Next time will be revisit points
     }
-    else{
-      Notify("GENPATH_REGENERATE","true");
+    else if (m_regenerate==true){
+      std::cout<<"update missed points, regen: "<<updates_str<<std::endl;
+      Notify("TRANSIT_UPDATES_MISSED_POINTS",updates_str);
+      Notify("MISSED_POINTS","true");
     }
-    //else
-    
-    m_all_points_posted = true;
-    m_regenerate = true; // Added this
   
- }
+  }
   
-  return(true);
+  else{
+    return(true);
+  }
+  
+  return (true); 
 }
 
 //---------------------------------------------------------
@@ -296,5 +363,7 @@ void GenPath::RegisterVariables()
   Register("WPT_STAT",0);
   Register("WPT_INDEX",0);
   Register("GENPATH_REGENERATE",0);
+  Register("FINISHED_SEARCH",0);
+  Register("FIRST_TIME_REGEN",0);
 }
 
