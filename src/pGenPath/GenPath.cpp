@@ -23,14 +23,11 @@ GenPath::GenPath()
 {
   m_all_points_mail = false;
   m_all_points_posted = false;
-  m_visit_radius = 4.0; //Change later
   m_first_time = false;
   m_first_time_regen = false;
   m_finished_search = false;
   m_current_size = 0;
   m_previous_size = 0;
-  //  m_revisit_points_add = false;
-
   m_regenerate = false;
 }
 
@@ -80,21 +77,18 @@ bool GenPath::OnNewMail(MOOSMSG_LIST &NewMail)
        dd>>dist_double;
        ii>>index_int;
 	   
-       //    std::cout<<"wpt stat: "<<sval<<std::endl;
        //check if id_str is in list already       
-       if(std::find(m_index_points.begin(), m_index_points.end(), index_str) == m_index_points.end()){ //don't have index
+       if(std::find(m_index_points.begin(), m_index_points.end(), index_str) == m_index_points.end()){ 
 	 if (index_int ==0){ // First value	
 	   m_dist_to_point.push_back(dist_double);
 	   m_index_points.push_back(index_str);
-	   m_dist_final_val.push_back(0); //Keep track of final values
-	   // wpt_ii++;
+	   m_dist_final_val.push_back(0); //Keep track of final values	  
 	 }
 	 else{ //Tracking new visit point
 	   m_dist_to_point.push_back(dist_double); //Add to list of distances
 	   m_index_points.push_back(index_str);
 	   m_dist_final_val.push_back(0);
 	   m_dist_final_val[index_int-1]=1;
-	   //  wpt_ii++;
 	 }
        }
        else{ //Update distance for current wpt index
@@ -185,23 +179,17 @@ bool GenPath::Iterate()
       int temp_index=0;
       m_current_size =m_dist_to_point.size();
       if (m_current_size>m_previous_size){ //Keep track of adding distances
-	for (std::vector<double>::iterator k = m_dist_to_point.begin(); k != m_dist_to_point.end(); ++k){
-       	std::cout<<"dist: "<<*k<<", minimum radius: "<<m_visit_radius<<std::endl;
-	
-	  //Recounting old numbers
+	for (std::vector<double>::iterator k = m_dist_to_point.begin(); k != m_dist_to_point.end(); ++k){	
 	  if ((*k>m_visit_radius)&&(m_dist_final_val[temp_index]==1)){ //Miss
 	  //Check if already have number
-	     std::string id_str = tokStringParse(m_points_ordered[temp_index], "id", ',', '=');  
-      
+	     std::string id_str = tokStringParse(m_points_ordered[temp_index], "id", ',', '=');     
 	     if(std::find(m_id_revisit_points.begin(), m_id_revisit_points.end(), id_str) != m_id_revisit_points.end()) { //Check if requested visit point is part of list
 	       temp_index++;
 	     } //already have it
 	     else{
-	       std::cout<<"push back, point: "<<m_points_ordered[temp_index]<<std::endl;
 	       //if unique id., push back
 	       m_id_revisit_points.push_back(id_str);
 	       m_revisit_points.push_back(m_points_ordered[temp_index]);
-	       //   m_revisit_points_add = true; //Added points
 	       temp_index++;
 	     }
 	  }
@@ -212,9 +200,6 @@ bool GenPath::Iterate()
 	m_previous_size = m_current_size;
       }
       
-      //No missed points
-          std::cout<<"revisit points size: "<<m_revisit_points.size()<<std::endl;
-      //   std::cout<<"first time throgh revist: "<<m_first_time_regen<<std::endl;
       if ((m_revisit_points.size()==0)&&(m_finished_search==true)){ //DONE
 	Notify("RETURN","true");
 	Notify("SEARCH","false");
@@ -223,15 +208,14 @@ bool GenPath::Iterate()
 	m_regenerate = false;
        	return (true);
       }
-      else if ((m_revisit_points.size()>0)&&(m_finished_search==true)){ //Add condition for a point greater than N
-      //Add revisit points to visit points
+      else if ((m_revisit_points.size()>0)&&(m_finished_search==true)){ 
 	Notify("MISSED_POINTS","true");
 	m_visit_points.insert(m_visit_points.end(), m_revisit_points.begin(), m_revisit_points.end());     
-	m_revisit_points.clear(); //Clear revisit points
+	m_revisit_points.clear(); //Clear all lists
 	m_dist_to_point.clear();
 	m_index_points.clear();
 	m_id_revisit_points.clear();
-	m_dist_final_val.clear(); //Update current size
+	m_dist_final_val.clear(); 
 	m_current_size = 0;
 	m_previous_size =0;
 	m_finished_search = false;
@@ -239,10 +223,9 @@ bool GenPath::Iterate()
        	std::cout<<"finished a search, visit points"<<std::endl;
       }
       else if((m_revisit_points.size()>0)&&(m_first_time_regen==true)){
-	     //Add revisit points to visit points
 	Notify("MISSED_POINTS","true");
 	m_visit_points.insert(m_visit_points.end(), m_revisit_points.begin(), m_revisit_points.end());     
-	m_revisit_points.clear(); //Clear revisit points
+	m_revisit_points.clear(); //Clear all lists
 	m_dist_to_point.clear();
 	m_index_points.clear();
 	m_dist_final_val.clear();
@@ -260,13 +243,12 @@ bool GenPath::Iterate()
 	m_regenerate = false;
        	return (true);	
       }
-      else{ //NOt finished, delete later
+      else{ //Not finished
 	//	continue;
       }
     }
     else{
         return (true);
-      //    std::cout<<"regen is not true"<<std::endl;
     }
   }
 
@@ -293,7 +275,6 @@ bool GenPath::Iterate()
 	//Get x, y positions from string
 	std::string x_str = tokStringParse(*k, "x", ',', '=');
 	std::string y_str = tokStringParse(*k, "y", ',', '=');
-	//   std::string id_str = tokStringParse(*k,"id",',','=');
 	double x_double = 0.0;
 	double y_double = 0.0;
 	stringstream rr;
