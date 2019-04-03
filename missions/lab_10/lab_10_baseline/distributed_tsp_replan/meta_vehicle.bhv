@@ -5,11 +5,14 @@ initialize   DEPLOY  = true
 initialize   RETURN  = false
 initialize   STATION_KEEP = false
 initialize   LOITER  = false
-initialize   SEARCH = false
+initialize   SEARCH = true
 initialize   REFUEL_NEEDED = false
 initialize   AT_START_PT = false
 initialize   GENPATH_REGENERATE = false
 initialize   FIRST_TIME = true
+initialize   MISSED_POINTS = false
+initialize   FINISHED_SEARCH = false
+initialize   FIRST_TIME_REGEN = false
 
 set MODE = ACTIVE {
   DEPLOY = true
@@ -57,7 +60,9 @@ set MODE = SEARCHING_FIRST_TIME{
 set MODE = SEARCHING_MISSED_POINTS{
   MODE = ACTIVE:SEARCHING
   GENPATH_REGENERATE = true
+  MISSED_POINTS = true
   FIRST_TIME = false
+  FINISHED_SEARCH = false
 }
 //----------------------------------------------
 Behavior = BHV_Loiter
@@ -117,10 +122,10 @@ Behavior = BHV_Waypoint
   name = search_points
   pwt = 100
   condition = MODE==SEARCHING_FIRST_TIME
-  updates = TRANSIT_UPDATES
+  updates = TRANSIT_UPDATES_FIRST_TIME
     // Parameters specific to this behavior
    // ------------------------------------
-      capture_radius = 3                       // default
+      capture_radius = 8                       // default
         capture_line = false                   // default
        //   cycle_flag = COMMS_NEEDED=true       // example
      //           lead = -1                      // default
@@ -143,6 +148,7 @@ Behavior = BHV_Waypoint
  
   endflag = GENPATH_REGENERATE =true
   endflag = FIRST_TIME = false
+  endflag = FIRST_TIME_REGEN = true
 
 
 }
@@ -157,7 +163,7 @@ Behavior = BHV_Waypoint
   perpetual = true
 
       speed = 1.2
-     radius = 3.0
+     radius = 5.0
   nm_radius = 15.0
      points = $(START_POS)
        lead = 8
@@ -185,7 +191,7 @@ Behavior = BHV_Timer
   name = no_refuel_needed
   condition = MODE == SEARCHING
 
-  duration =12000
+  duration =600
   duration_idle_decay= false
   perpetual = true
   endflag = REFUEL_NEEDED = true
@@ -200,10 +206,10 @@ Behavior = BHV_Waypoint
   name = missed_search_points
   pwt = 100
   condition = MODE==SEARCHING_MISSED_POINTS
-  updates = TRANSIT_UPDATES
+  updates = TRANSIT_UPDATES_MISSED_POINTS
     // Parameters specific to this behavior
    // ------------------------------------
-      capture_radius = 3                       // default
+      capture_radius = 8                       // default
         capture_line = false                   // default
        //   cycle_flag = COMMS_NEEDED=true       // example
      //           lead = -1                      // default
@@ -211,8 +217,9 @@ Behavior = BHV_Waypoint
        lead_to_start = false                   // default
                order = normal                  // default 
           //    points = pts={-200,-200:30,-60}  // example
+	      points = $(START_POS)
               repeat = 0                       // default
-         slip_radius = 15                      // default
+         slip_radius = 10                      // default
                speed = 1.2                     // default is zero
     //         wptflag = HITPTS = $(X),$(Y)      // example     
 
@@ -223,7 +230,9 @@ Behavior = BHV_Waypoint
         visual_hints = nextpt_color = yellow        // default
         visual_hints = nextpt_lcolor = aqua         // default
         visual_hints = nextpt_vertex_size = 5       // default
- 
-
-
+  perpetual = true
+  runflag = FINISHED_SEARCH = false
+  endflag = FINISHED_SEARCH = true
+ //endflag = RETURN = true
+ //endflag = SEARCH = false
 }
