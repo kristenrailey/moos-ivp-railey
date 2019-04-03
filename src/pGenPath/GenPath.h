@@ -37,6 +37,8 @@ class GenPath : public CMOOSApp
    std::vector<std::string> m_id_points;
    std::vector<std::string> m_points_ordered;
    std::vector<std::string> m_revisit_points;
+   std::vector<int> m_dist_final_val;
+   std::vector<std::string> m_id_revisit_points;
    bool m_all_points_mail;
    bool m_all_points_posted;
    double m_visit_radius;
@@ -46,6 +48,8 @@ class GenPath : public CMOOSApp
    std::map<char,int> m_points_distances;
    bool m_finished_search;
    bool m_first_time_regen;
+   int m_current_size;
+   int m_previous_size;
 
  private: // State variables
 };

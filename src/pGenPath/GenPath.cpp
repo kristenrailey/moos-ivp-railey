@@ -27,6 +27,8 @@ GenPath::GenPath()
   m_first_time = false;
   m_first_time_regen = false;
   m_finished_search = false;
+  m_current_size = 0;
+  m_previous_size = 0;
   //  m_revisit_points_add = false;
 
   m_regenerate = false;
@@ -84,11 +86,14 @@ bool GenPath::OnNewMail(MOOSMSG_LIST &NewMail)
 	 if (index_int ==0){ // First value	
 	   m_dist_to_point.push_back(dist_double);
 	   m_index_points.push_back(index_str);
+	   m_dist_final_val.push_back(0); //Keep track of final values
 	   // wpt_ii++;
 	 }
 	 else{ //Tracking new visit point
 	   m_dist_to_point.push_back(dist_double); //Add to list of distances
 	   m_index_points.push_back(index_str);
+	   m_dist_final_val.push_back(0);
+	   m_dist_final_val[index_int-1]=1;
 	   //  wpt_ii++;
 	 }
        }
@@ -178,23 +183,39 @@ bool GenPath::Iterate()
       
       // Add points to visit list if distance is less than N
       int temp_index=0;
-      std::cout<<"size of dist to point: "<<m_dist_to_point.size()<<std::endl;
-      for (std::vector<double>::iterator k = m_dist_to_point.begin(); k != m_dist_to_point.end(); ++k){
-	//	std::cout<<"dist: "<<*k<<", minimum radius: "<<m_visit_radius<<std::endl;
-	if (*k>m_visit_radius){ //Miss
-	  m_revisit_points.push_back(m_points_ordered[temp_index]);
-	  m_revisit_points_add = true; //Added points
-	  temp_index++;
+      m_current_size =m_dist_to_point.size();
+      if (m_current_size>m_previous_size){ //Keep track of adding distances
+	for (std::vector<double>::iterator k = m_dist_to_point.begin(); k != m_dist_to_point.end(); ++k){
+       	std::cout<<"dist: "<<*k<<", minimum radius: "<<m_visit_radius<<std::endl;
+	
+	  //Recounting old numbers
+	  if ((*k>m_visit_radius)&&(m_dist_final_val[temp_index]==1)){ //Miss
+	  //Check if already have number
+	     std::string id_str = tokStringParse(m_points_ordered[temp_index], "id", ',', '=');  
+      
+	     if(std::find(m_id_revisit_points.begin(), m_id_revisit_points.end(), id_str) != m_id_revisit_points.end()) { //Check if requested visit point is part of list
+	       temp_index++;
+	     } //already have it
+	     else{
+	       std::cout<<"push back, point: "<<m_points_ordered[temp_index]<<std::endl;
+	       //if unique id., push back
+	       m_id_revisit_points.push_back(id_str);
+	       m_revisit_points.push_back(m_points_ordered[temp_index]);
+	       //   m_revisit_points_add = true; //Added points
+	       temp_index++;
+	     }
+	  }
+	  else{ //Hit
+	    temp_index++;
+	  }
 	}
-	else{ //Hit
-	  temp_index++;
-	}
+	m_previous_size = m_current_size;
       }
       
       //No missed points
-       std::cout<<"revisit points size: "<<m_revisit_points.size()<<std::endl;
+          std::cout<<"revisit points size: "<<m_revisit_points.size()<<std::endl;
       //   std::cout<<"first time throgh revist: "<<m_first_time_regen<<std::endl;
-      if ((m_revisit_points.size()==0)&&(m_finished_search==true)){
+      if ((m_revisit_points.size()==0)&&(m_finished_search==true)){ //DONE
 	Notify("RETURN","true");
 	Notify("SEARCH","false");
 	Notify("MISSED_POINTS","false");
@@ -202,13 +223,19 @@ bool GenPath::Iterate()
 	m_regenerate = false;
        	return (true);
       }
-      else if ((m_revisit_points.size()>0)&&(m_finished_search==true)){
+      else if ((m_revisit_points.size()>0)&&(m_finished_search==true)){ //Add condition for a point greater than N
       //Add revisit points to visit points
 	Notify("MISSED_POINTS","true");
 	m_visit_points.insert(m_visit_points.end(), m_revisit_points.begin(), m_revisit_points.end());     
 	m_revisit_points.clear(); //Clear revisit points
 	m_dist_to_point.clear();
 	m_index_points.clear();
+	m_id_revisit_points.clear();
+	m_dist_final_val.clear(); //Update current size
+	m_current_size = 0;
+	m_previous_size =0;
+	m_finished_search = false;
+	Notify("FINISHED_SEARCH","false");
        	std::cout<<"finished a search, visit points"<<std::endl;
       }
       else if((m_revisit_points.size()>0)&&(m_first_time_regen==true)){
@@ -218,10 +245,14 @@ bool GenPath::Iterate()
 	m_revisit_points.clear(); //Clear revisit points
 	m_dist_to_point.clear();
 	m_index_points.clear();
+	m_dist_final_val.clear();
+	m_id_revisit_points.clear();
+       	m_current_size = 0;
+	m_previous_size =0;
 	m_first_time_regen=false;
        	std::cout<<"revisit points, first time"<<std::endl;
       }
-      else if((m_revisit_points.size()==0)&&(m_first_time_regen==true)){
+      else if((m_revisit_points.size()==0)&&(m_first_time_regen==true)){ //DONE
 	Notify("RETURN","true");
 	Notify("SEARCH","false");
 	Notify("MISSED_POINTS","false");
