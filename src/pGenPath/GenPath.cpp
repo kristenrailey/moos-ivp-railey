@@ -49,7 +49,7 @@ bool GenPath::OnNewMail(MOOSMSG_LIST &NewMail)
     CMOOSMsg &msg = *p;
     string key   = msg.GetKey();
     string sval  = msg.GetString(); 
-
+    double dval = msg.GetDouble();
     if (key == "VISIT_POINT"){
       std::string id_str = tokStringParse(sval, "id", ',', '=');  
       
@@ -63,8 +63,16 @@ bool GenPath::OnNewMail(MOOSMSG_LIST &NewMail)
       }
  
     }
+    if (key == "NAV_X"){
+      m_nav_x.push_back(dval);
+
+
+    }
+    if (key == "NAV_Y"){
+      m_nav_y.push_back(dval);
+    }
     // For calculating distance to goal point
-    if (key == "WPT_STAT"){
+    /*  if (key == "WPT_STAT"){
        std::string dist_str = tokStringParse(sval,"dist",',','=');
        std::string index_str = tokStringParse(sval,"index",',','=');
        // Change dist string to double
@@ -95,7 +103,7 @@ bool GenPath::OnNewMail(MOOSMSG_LIST &NewMail)
 	 m_dist_to_point[index_int] = dist_double;
          }
        
-    }
+	 }*/
 
     if (key=="GENPATH_REGENERATE"){
       if (sval =="true"){
@@ -168,6 +176,61 @@ bool GenPath::OnConnectToServer()
 bool GenPath::Iterate()
 {
 
+  //--------------------------
+  // New m_dist_to_point
+  //Loop through all ordered waypoints
+  // Caculate nearest distance
+  
+  //  m_points_ordered.push_back(current_visit_point_str); //Added this                                                                                                                   
+  int index_int = 0;
+  
+  for (std::vector<std::string>::iterator k = m_points_ordered.begin(); k != m_points_ordered.end(); ++k){
+    double current_min = 0.0;
+    std::string x_str = tokStringParse(*k, "x", ',', '=');
+    std::string y_str = tokStringParse(*k, "y", ',', '=');
+    double x_double = 0.0;
+    double y_double = 0.0;
+    stringstream rr;
+    stringstream ww;
+    rr<<x_str;
+    ww<<y_str;
+    rr>>x_double;
+    ww>>y_double;
+
+
+    for (std::vector<double>::iterator xx = m_nav_x.begin(); xx!=m_nav_x.end();++xx){
+      for (std::vector<double>::iterator yy = m_nav_y.begin(); yy!=m_nav_y.end();++yy){
+	double temp_dist=sqrt(pow((x_double-*xx),2)+pow((y_double-*yy),2));
+        if (temp_dist<current_min){  // Check if less than current min, update                                                                                                            
+          current_min=temp_dist;
+          //double current_x=*xx;
+          //double current_y=*yy;
+	  // current_k=k;
+	  // current_visi_point_str = *k;
+        }
+      }
+    }
+    //m_dist_to_point[index_int] = current_min;
+    if (index_int ==0){ // First value                                                                                                                                               
+      m_dist_to_point.push_back(current_min);                                                                                                                                        
+      /*m_index_points.push_back(index_str);                                                                                                                                           
+      m_dist_final_val.push_back(0); *///Kee track of final values                                                                                                                    
+    }                                                                                                                                                                                
+    else{ //Tracking new visit point                                                                                                                                                 
+      m_dist_to_point.push_back(dist_double); //Add to list of distances                                                                                                             
+      m_index_points.push_back(index_str);                                                                                                                                           
+      //m_dist_final_val.push_back(0);                                                                                                                                                 
+      //m_dist_final_val[index_int-1]=1;                                                                                                                                               
+    }                                                                                                                                                                                
+  }                                                                                                                                                                                  
+  else{ //Update distance for current wpt index                                                                                                                                      
+    m_dist_to_point[index_int] = dist_double;                                                                                                                                        
+  }  
+
+    index_int++;
+  }
+
+  //---------------------------
   if ((m_all_points_mail==true && m_all_points_posted == false)){
     m_first_time = true;
   }

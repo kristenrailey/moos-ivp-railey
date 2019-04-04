@@ -22,7 +22,7 @@ ADD_SUBDIRECTORY(pPrimeFactor)
 ADD_SUBDIRECTORY(pOdometry)
 ADD_SUBDIRECTORY(pCommunicationAngle)
 ADD_SUBDIRECTORY(pGenPath)
-
+ADD_SUBDIRECTORY(uFLdHazardMgrX)
 
 ##############################################################################
 #                           END of CMakeLists.txt

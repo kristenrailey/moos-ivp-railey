@@ -39,6 +39,8 @@ class GenPath : public CMOOSApp
    std::vector<std::string> m_revisit_points;
    std::vector<int> m_dist_final_val;
    std::vector<std::string> m_id_revisit_points;
+   std::vector<double> m_nav_x;
+   std::vector<double> m_nav_y;
    bool m_all_points_mail;
    bool m_all_points_posted;
    double m_visit_radius;
