@@ -52,7 +52,12 @@ class GenPath : public CMOOSApp
    bool m_first_time_regen;
    int m_current_size;
    int m_previous_size;
-
+   int m_first_dist_to_point;
+   double m_old_x;
+   double m_old_y;
+   bool m_first_nav_x;
+   bool m_first_nav_y;
+   bool m_collect_nav;
  private: // State variables
 };
 
