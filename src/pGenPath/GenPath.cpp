@@ -29,12 +29,6 @@ GenPath::GenPath()
   m_current_size = 0;
   m_previous_size = 0;
   m_regenerate = false;
-  m_first_dist_to_point = 0;
-  m_old_x = 0.0;
-  m_old_y=0.0;
-  m_first_nav_x=true;
-  m_first_nav_y=true;
-  m_collect_nav=false;
 }
 
 //---------------------------------------------------------
@@ -52,11 +46,10 @@ bool GenPath::OnNewMail(MOOSMSG_LIST &NewMail)
   MOOSMSG_LIST::iterator p;
 
   for(p=NewMail.begin(); p!=NewMail.end(); p++) {
-    //  std::cout<<"receviing mail"<<std::endl;
     CMOOSMsg &msg = *p;
     string key   = msg.GetKey();
     string sval  = msg.GetString(); 
-    double dval = msg.GetDouble();
+
     if (key == "VISIT_POINT"){
       std::string id_str = tokStringParse(sval, "id", ',', '=');  
       
@@ -69,29 +62,6 @@ bool GenPath::OnNewMail(MOOSMSG_LIST &NewMail)
 
       }
  
-    }
-    if (key == "NAV_X"){
-      if (m_first_nav_x){
-	m_old_x=dval;
-	m_first_nav_x=false;
-      }
-      
-      else if ((m_collect_nav==true)&&(m_first_nav_x==false)&& (abs(dval-m_old_x)>1.0)){
-	m_nav_x.push_back(dval);
-	m_old_x=dval;
-      }
-      //     std::cout<<"size: "<<m_nav_x.size()<<std::endl;
-
-    }
-    if (key == "NAV_Y"){
-      if (m_first_nav_y){
-	m_old_y=dval;
-	m_first_nav_y=false;
-      }
-      else if ((m_collect_nav==true)&&(m_first_nav_y==false)&&(abs(dval-m_old_y)>1.0)){
-	m_nav_y.push_back(dval);
-	m_old_y=dval;
-      }
     }
     // For calculating distance to goal point
     if (key == "WPT_STAT"){
@@ -106,21 +76,16 @@ bool GenPath::OnNewMail(MOOSMSG_LIST &NewMail)
        ii<<index_str;
        dd>>dist_double;
        ii>>index_int;
-       if (dist_double<10){
-	 m_collect_nav=true;
-       }
-       else{
-	 m_collect_nav =false;
-       }
+	   
        //check if id_str is in list already       
-       /*  if(std::find(m_index_points.begin(), m_index_points.end(), index_str) == m_index_points.end()){ 
+       if(std::find(m_index_points.begin(), m_index_points.end(), index_str) == m_index_points.end()){ 
 	 if (index_int ==0){ // First value	
-	   m_dist_to_point_wpt.push_back(dist_double);
+	   m_dist_to_point.push_back(dist_double);
 	   m_index_points.push_back(index_str);
 	   m_dist_final_val.push_back(0); //Keep track of final values	  
 	 }
 	 else{ //Tracking new visit point
-	   m_dist_to_point_wpt.push_back(dist_double); //Add to list of distances
+	   m_dist_to_point.push_back(dist_double); //Add to list of distances
 	   m_index_points.push_back(index_str);
 	   m_dist_final_val.push_back(0);
 	   m_dist_final_val[index_int-1]=1;
@@ -128,9 +93,9 @@ bool GenPath::OnNewMail(MOOSMSG_LIST &NewMail)
        }
        else{ //Update distance for current wpt index
 	 m_dist_to_point[index_int] = dist_double;
-         }*/
+         }
        
-	 }
+    }
 
     if (key=="GENPATH_REGENERATE"){
       if (sval =="true"){
@@ -203,77 +168,27 @@ bool GenPath::OnConnectToServer()
 bool GenPath::Iterate()
 {
 
-  //--------------------------
-  // New m_dist_to_point
-  //Loop through all ordered waypoints
-  // Caculate nearest distance
-  
-  //  m_points_ordered.push_back(current_visit_point_str); //Added this
-
-  //NEW STUFF
-  /*
-  std::cout<<"x size: "<<m_nav_x.size()<<std::endl;
-  int index_int = 0;
-  double current_min = 1000.0;
-  
-  for (std::vector<std::string>::iterator k = m_points_ordered.begin(); k != m_points_ordered.end(); ++k){
-    std::cout<<m_first_dist_to_point<<std::endl;
-    if (m_first_dist_to_point == 0){
-      m_dist_to_point.push_back(current_min);
-    }
-    std::cout<<"dist size: "<<m_dist_to_point.size()<<std::endl;
-    //   std::cout<<"entered loop through ordered points"<<std::endl;
-    std::string x_str = tokStringParse(*k, "x", ',', '=');
-    std::string y_str = tokStringParse(*k, "y", ',', '=');
-    double x_double = 0.0;
-    double y_double = 0.0;
-    stringstream rr;
-    stringstream ww;
-    rr<<x_str;
-    ww<<y_str;
-    rr>>x_double;
-    ww>>y_double;
-
-    //  m_dist_to_point.push_back(current_min); Generate as a                                                                                                         
-    for (std::vector<double>::iterator xx = m_nav_x.begin(); xx!=m_nav_x.end();++xx){ //too computationally heavy
-      for (std::vector<double>::iterator yy = m_nav_y.begin(); yy!=m_nav_y.end();++yy){
-	double temp_dist=sqrt(pow((x_double-*xx),2)+pow((y_double-*yy),2));
-        if (temp_dist<current_min){  // Check if less than current min, update                                                                                                  
-          current_min=temp_dist;
-        }
-      }
-      }
-    m_dist_to_point[index_int] = current_min; //Update to current min
-    index_int++;                                                                                                                                    
-  }                                                                                                                                                        
-  m_first_dist_to_point = 1;
-  */
-  //NEW STUFF
-  //---------------------------
   if ((m_all_points_mail==true && m_all_points_posted == false)){
     m_first_time = true;
   }
 
   if (m_first_time==false){   
     if (m_regenerate==true){
-      // LEFT OFF HERE...Figuring out hit or miss and saving to vector revisit points
+      
       // Add points to visit list if distance is less than N
       int temp_index=0;
-      //    std::cout<<"m dist to point list size: "<<m_dist_to_point.size()<<std::endl;
       m_current_size =m_dist_to_point.size();
-      //    if (m_current_size>m_previous_size){ //Keep track of adding distances
-      for (std::vector<double>::iterator k = m_dist_to_point.begin(); k != m_dist_to_point.end(); ++k){
-	std::cout<<"dist: "<<*k<<std::endl;
-	  if ((*k>m_visit_radius)){ //Miss
+      if (m_current_size>m_previous_size){ //Keep track of adding distances
+	for (std::vector<double>::iterator k = m_dist_to_point.begin(); k != m_dist_to_point.end(); ++k){	
+	  if ((*k>m_visit_radius)&&(m_dist_final_val[temp_index]==1)){ //Miss
 	  //Check if already have number
-	     std::string id_str = tokStringParse(m_points_ordered[temp_index], "id", ',', '=');
+	     std::string id_str = tokStringParse(m_points_ordered[temp_index], "id", ',', '=');     
 	     if(std::find(m_id_revisit_points.begin(), m_id_revisit_points.end(), id_str) != m_id_revisit_points.end()) { //Check if requested visit point is part of list
 	       temp_index++;
 	     } //already have it
 	     else{
 	       //if unique id., push back
 	       m_id_revisit_points.push_back(id_str);
-	       //     std::cout<<"size: "<<m_points_ordered.size()<<" index: "<<temp_index<<std::endl;
 	       m_revisit_points.push_back(m_points_ordered[temp_index]);
 	       temp_index++;
 	     }
@@ -281,10 +196,10 @@ bool GenPath::Iterate()
 	  else{ //Hit
 	    temp_index++;
 	  }
+	}
+	m_previous_size = m_current_size;
       }
-      //	m_previous_size = m_current_size;
-    
-      //   std::cout<<"revisit points size: "<<m_revisit_points.size()<<std::endl;
+      
       if ((m_revisit_points.size()==0)&&(m_finished_search==true)){ //DONE
 	Notify("RETURN","true");
 	Notify("SEARCH","false");
@@ -300,9 +215,7 @@ bool GenPath::Iterate()
 	m_dist_to_point.clear();
 	m_index_points.clear();
 	m_id_revisit_points.clear();
-	m_dist_final_val.clear();
-	m_nav_x.clear();
-	m_nav_y.clear();
+	m_dist_final_val.clear(); 
 	m_current_size = 0;
 	m_previous_size =0;
 	m_finished_search = false;
@@ -317,8 +230,6 @@ bool GenPath::Iterate()
 	m_index_points.clear();
 	m_dist_final_val.clear();
 	m_id_revisit_points.clear();
-	m_nav_x.clear();
-	m_nav_y.clear();
        	m_current_size = 0;
 	m_previous_size =0;
 	m_first_time_regen=false;
@@ -337,8 +248,7 @@ bool GenPath::Iterate()
       }
     }
     else{
-      //  std::cout<<"return true 3"<<std::endl;
-      // return (true);
+        return (true);
     }
   }
 
@@ -401,7 +311,6 @@ bool GenPath::Iterate()
       Notify("SEARCH","true");
       std::cout<<"sent notifications"<<std::endl;
       m_all_points_posted = true;
-      m_first_dist_to_point = 0;
       m_first_time = false; //Next time will be revisit points
     }
     else if (m_regenerate==true){
@@ -413,57 +322,9 @@ bool GenPath::Iterate()
   }
   
   else{
-    //   std::cout<<"returned true 1"<<std::endl;
-    // return(true);
+    return(true);
   }
-
   
-  //NEW STUFF
-  
-  //  std::cout<<"x size: "<<m_nav_x.size()<<std::endl;
-  int index_int = 0;
-  //std::cout<<"mpoints ordered size: "<<m_points_ordered.size()<<std::endl;
-  for (std::vector<std::string>::iterator k = m_points_ordered.begin(); k != m_points_ordered.end(); ++k){
-    double current_min = 1000.0;
-
-    if (m_first_dist_to_point == 0){
-      m_dist_to_point.push_back(current_min);
-    }
-    //   std::cout<<"dist size: "<<m_dist_to_point.size()<<std::endl;
-    //   std::cout<<"entered loop through ordered points"<<std::endl;
-    std::string x_str = tokStringParse(*k, "x", ',', '=');
-    std::string y_str = tokStringParse(*k, "y", ',', '=');
-    double x_double = 0.0;
-    double y_double = 0.0;
-    stringstream rr;
-    stringstream ww;
-    rr<<x_str;
-    ww<<y_str;
-    rr>>x_double;
-    ww>>y_double;
-
-    // m_dist_to_point.push_back(current_min); Generate as a
-    //  std::cout<<"size: "<<m_nav_x.size()<<", "<<m_nav_y.size()<<std::endl;
-    
-    for (std::vector<double>::iterator xx = m_nav_x.begin(); xx!=m_nav_x.end();++xx){ //too computationally heavy
-      for (std::vector<double>::iterator yy = m_nav_y.begin(); yy!=m_nav_y.end();++yy){
-	double temp_dist=sqrt(pow((x_double-*xx),2)+pow((y_double-*yy),2));
-	//       	std::cout<<"temp dist: "<<temp_dist<<std::endl;
-        if (temp_dist<current_min){  // Check if less than current min, update                                                                                                  
-          current_min=temp_dist;
-        }
-      }
-      }
-    m_dist_to_point[index_int] = current_min; //Update to current min
-    //  std::cout<<"current miN: "<<current_min<<std::endl;
-    //  std::cout<<"size of m dist to point: "<<m_dist_to_point.size()<<std::endl;
-    index_int++;                                                                                                                                    
-  }                                                                                                                                                   
-  m_first_dist_to_point = 1;
-  
-  //NEW STUFF
-  //---------------------------
-  //  std::cout<<"return true last"<<std::endl;
   return (true); 
 }
 
@@ -482,7 +343,7 @@ bool GenPath::OnStartUp()
       string param = stripBlankEnds(toupper(biteString(*p, '=')));
       string value = stripBlankEnds(*p);
       
-      if(param == "VISIT_RADIUS") { //Added this
+      if(param == "visit_radius") { //Added this
         //handled
 	//Convert value to double
        stringstream vr;
