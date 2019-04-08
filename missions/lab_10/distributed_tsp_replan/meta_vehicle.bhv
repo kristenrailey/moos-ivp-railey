@@ -125,7 +125,7 @@ Behavior = BHV_Waypoint
   updates = TRANSIT_UPDATES_FIRST_TIME
     // Parameters specific to this behavior
    // ------------------------------------
-      capture_radius = 5                       // default
+      capture_radius = 0.1                       // default
         capture_line = false                   // default
        //   cycle_flag = COMMS_NEEDED=true       // example
      //           lead = -1                      // default
@@ -191,7 +191,7 @@ Behavior = BHV_Timer
   name = no_refuel_needed
   condition = MODE == SEARCHING
 
-  duration =600
+  duration =6000 //was 600
   duration_idle_decay= false
   perpetual = true
   endflag = REFUEL_NEEDED = true
@@ -209,7 +209,7 @@ Behavior = BHV_Waypoint
   updates = TRANSIT_UPDATES_MISSED_POINTS
     // Parameters specific to this behavior
    // ------------------------------------
-      capture_radius = 5                       // default
+      capture_radius = 0.1                       // default
         capture_line = false                   // default
        //   cycle_flag = COMMS_NEEDED=true       // example
      //           lead = -1                      // default
