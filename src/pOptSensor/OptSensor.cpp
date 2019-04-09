@@ -106,19 +106,29 @@ bool OptSensor::Iterate()
       //calcSearchTime(sensor_width,search_area_width,search_area_height);
     int best_sensor_width_index;
     double sa_height = m_search_reg_y_max-m_search_reg_y_min;
-    double sa_width = m_search_reg_x_max-m_search_reg_x_min;
+    double sa_width = (m_search_reg_x_max-m_search_reg_x_min)/2.0; //Areas are split between the two robots
     std::cout<<"sa width: "<<sa_width<<", sa height: "<<sa_height<<std::endl;
-    double best_time = 10000.0;
+    double best_time = 0.0;
     for (int i = 0; i<m_sensor_width.size(); i++){
       double current_time = calcSearchTime(m_sensor_width[i],sa_width,sa_height);
       std::cout<<"current time: "<<current_time<<std::endl;
-      if ((current_time<m_max_time)&&(current_time<best_time)){
+      if ((current_time<m_max_time)&&(current_time>best_time)){
 	  //New best
 	  best_time = current_time;
 	  best_sensor_width_index = i;
       }
     }  
       std::cout<<"updated lawnmower, best sensor width: "<< m_sensor_width[best_sensor_width_index]<<std::endl;
+      //lawnmower str:  points = format=lawnmower, label=foxtrot, x=0, y=40, height=60, width=180,lane_width=15, rows=north-south, startx=20, starty=-300, degs=45
+      ostringstream os;
+      double lane_width = m_sensor_width[best_sensor_width_index]/2.0;
+      double y_center = m_search_reg_y_min +(m_search_reg_y_max-m_search_reg_y_min)/2.0; //Assuming split btw two robots
+      double x_center =m_search_reg_x_min +(m_search_reg_x_max-m_search_reg_x_min)/4.0;
+
+      os << "points = format=lawnmower, label=jakesearch, x=" <<x_center<<",y="<< y_center<<",height="<<sa_height<<",width="<<sa_width<<",lane_width="<<lane_width<<",rows=ns,startx="<<m_search_reg_x_min<<",starty="<<m_search_reg_y_max;
+      string lawnmower_str = os.str();
+      std::cout<<"lawnmower update: "<<lawnmower_str<<std::endl;
+      Notify("LAWNMOWER_UPDATES", lawnmower_str);
       m_update_lawnmower = true;
   };
 
