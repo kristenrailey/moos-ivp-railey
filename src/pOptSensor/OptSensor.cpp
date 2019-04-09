@@ -20,7 +20,7 @@ OptSensor::OptSensor()
   m_penalty_missed_hazard = 0.0;
   m_penalty_nonopt_hazard = 0.0; //?
   m_penalty_false_alarm = 0.0;
-  m_penalty_max_time = 0.0;
+  m_penalty_max_time_over = 0.0;
   m_max_time =0.0;
   m_penalty_max_time_rate = 0.0;
   m_transit_path_width = 0.0; //?
@@ -158,6 +158,7 @@ void OptSensor::handleMailMissionParams(std::string str)
     ss<<value;
     if (i == 0){
       ss>>m_penalty_missed_hazard;
+      std::cout<<"missed hazard:"<<m_penalty_missed_hazard<<std::endl;
     }
     else if (i==1){
       ss>>m_penalty_nonopt_hazard;
@@ -166,15 +167,20 @@ void OptSensor::handleMailMissionParams(std::string str)
       ss>>m_penalty_false_alarm;
     }
     else if (i==3){
-      ss>>m_penalty_max_time;
+      ss>>m_penalty_max_time_over;
+      std::cout<<"max time over: "<<m_penalty_max_time_over<<std::endl;
     }
     else if (i==4){
+      ss>>m_max_time;
+    }
+    else if (i==5){
       ss>>m_penalty_max_time_rate;
     }
     else if (i==5){
       ss>>m_transit_path_width;
     }
     else{ //Search region
+      std::cout<<"search region"<< value<<std::endl;
     }
   }
 }
