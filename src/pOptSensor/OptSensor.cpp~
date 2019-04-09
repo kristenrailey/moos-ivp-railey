@@ -32,11 +32,8 @@ OptSensor::OptSensor()
   m_update_lawnmower = false;
   m_sensor_options_received = false;
   m_name_received = false;
-  
+  // ADD THIS LATER  m_buffer =1000.0;
   m_num_passes =3.0;
-  
-  m_time_buffer=1000.0;
-  m_height_buffer=20.0;
 }
 
 //---------------------------------------------------------
@@ -121,7 +118,7 @@ bool OptSensor::Iterate()
     std::cout<<m_sensor_width[0]<<", "<<m_sensor_width[1]<<","<<m_sensor_width[2]<<","<<m_sensor_width[3]<<std::endl;
       //calcSearchTime(sensor_width,search_area_width,search_area_height);
     int best_sensor_width_index;
-    double sa_height = (m_search_reg_y_max-m_search_reg_y_min)+m_height_buffer;
+    double sa_height = m_search_reg_y_max-m_search_reg_y_min;
     double sa_width = (m_search_reg_x_max-m_search_reg_x_min)/2.0; //Areas are split between the two robots
     std::cout<<"sa width: "<<sa_width<<", sa height: "<<sa_height<<std::endl;
     double best_time = 0.0;
@@ -356,5 +353,5 @@ double OptSensor::calcSearchTime(double num_passes, double sensor_width,double s
   double num_lanes = search_area_width/lane_width;
   double total_dist = (search_area_height*(num_lanes+1)+search_area_width)*num_passes;
     std::cout<<"lane width: "<<lane_width<<"num of lanes: "<<num_lanes<<"total dist: "<<total_dist<<std::endl;
-    return ((total_dist/2.0)+m_time_buffer);
+  return (total_dist/2.0);
 }
