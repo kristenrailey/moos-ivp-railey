@@ -28,8 +28,11 @@ OptSensor::OptSensor()
   m_search_reg_y_min = 10000.0;
   m_search_reg_x_max = -10000.0;
   m_search_reg_y_max = -10000.0;
-
-  
+  m_search_config_received = false;
+  m_update_lawnmower = false;
+  m_sensor_options_received = false;
+  m_name_received = false;
+  // ADD THIS LATER  m_buffer =1000.0;
 }
 
 //---------------------------------------------------------
@@ -50,7 +53,9 @@ bool OptSensor::OnNewMail(MOOSMSG_LIST &NewMail)
     CMOOSMsg &msg = *p;
     string key   = msg.GetKey();
     string sval  = msg.GetString();
-    std::cout<<"Message: "<<key<<", val: "<<sval<<std::endl;
+    string comm = msg.GetCommunity();
+      //    std::cout<<"message: "<<key<<"value: "<<sval<<std::endl;
+      std::cout<<"community: "<<comm<std::endl;
     if (key == "UHZ_OPTIONS_SUMMARY"){
       //      std::cout<<"options summary: "<<sval<<std::endl;
       handleMailSensorOptionsSummary(sval);
@@ -59,6 +64,12 @@ bool OptSensor::OnNewMail(MOOSMSG_LIST &NewMail)
       std::cout<<"mission params: "<<sval<<std::endl;
       handleMailMissionParams(sval);
 
+    }
+
+    if (key == "UHZ_SENSOR_REQUEST"){  
+      m_vname = sval;
+      m_name_received = true;
+      std::cout<<"NAME: "<<m_vname<<std::endl;
     }
 #if 0 // Keep these around just for template
     string key   = msg.GetKey();
@@ -95,6 +106,57 @@ bool OptSensor::OnConnectToServer()
 
 bool OptSensor::Iterate()
 {
+  // std::cout<<"status: "<<m_name_received<<","<<m_search_config_received<<","<<m_update_lawnmower<<std::endl;
+  if ((m_name_received==true)&&(m_search_config_received == true)&&(m_update_lawnmower ==false)){
+    std::cout<<"********************* SENSOR WIDTH*****"<<std::endl;
+    //    msensor_width.push_back(temp_width);
+
+    std::cout<<m_sensor_width[0]<<", "<<m_sensor_width[1]<<","<<m_sensor_width[2]<<std::endl;
+      //calcSearchTime(sensor_width,search_area_width,search_area_height);
+    int best_sensor_width_index;
+    double sa_height = m_search_reg_y_max-m_search_reg_y_min;
+    double sa_width = (m_search_reg_x_max-m_search_reg_x_min)/2.0; //Areas are split between the two robots
+    std::cout<<"sa width: "<<sa_width<<", sa height: "<<sa_height<<std::endl;
+    double best_time = 0.0;
+    for (int i = 0; i<m_sensor_width.size(); i++){
+      double current_time = calcSearchTime(m_sensor_width[i],sa_width,sa_height);
+      std::cout<<"current time: "<<current_time<<std::endl;
+      if ((current_time<m_max_time)&&(current_time>best_time)){
+	  //New best
+	  best_time = current_time;
+	  best_sensor_width_index = i;
+      }
+    }  
+      std::cout<<"updated lawnmower, best sensor width: "<< m_sensor_width[best_sensor_width_index]<<std::endl;
+      //lawnmower str:  points = format=lawnmower, label=foxtrot, x=0, y=40, height=60, width=180,lane_width=15, rows=north-south, startx=20, starty=-300, degs=45
+      ostringstream os;
+      double lane_width = m_sensor_width[best_sensor_width_index]/2.0;
+      double y_center = m_search_reg_y_min +(m_search_reg_y_max-m_search_reg_y_min)/2.0; 
+
+      //Assuming split btw two robots
+      double x_center;
+      if (m_vname =="jake"){
+	x_center =m_search_reg_x_min +(m_search_reg_x_max-m_search_reg_x_min)/4.0;
+      }
+      else{ //other vehicle
+        x_center =m_search_reg_x_max -(m_search_reg_x_max-m_search_reg_x_min)/4.0;
+      }
+      os << "points = format=lawnmower, label="<<m_vname<<"search, x=" <<x_center<<",y="<< y_center<<",height="<<sa_height<<",width="<<sa_width<<",lane_width="<<lane_width<<",rows=ns,startx="<<m_search_reg_x_min<<",starty="<<m_search_reg_y_max;
+      string lawnmower_str = os.str();
+      std::cout<<"lawnmower update: "<<lawnmower_str<<std::endl;
+      Notify("LAWNMOWER_UPDATES", lawnmower_str);
+      
+      ostringstream os_config;
+      // UHZ_CONFIG_REQUEST                   "vname=jake,width=50,pd=0.7"
+      //TO DO : Add vname
+      // Pd function , this is the first time so very large
+      os_config<<"vname="<<m_vname<<",width="<<m_sensor_width[best_sensor_width_index]<<",pd=0.9";
+      string uhz_config_request_str = os_config.str();
+      Notify("UHZ_CONFIG_REQUEST",uhz_config_request_str);
+
+      m_update_lawnmower = true;
+  };
+
   return(true);
 }
 
@@ -134,6 +196,7 @@ void OptSensor::RegisterVariables()
   // Register("FOOBAR", 0);
   Register("UHZ_MISSION_PARAMS",0);
   Register("UHZ_OPTIONS_SUMMARY",0);
+  Register("UHZ_SENSOR_REQUEST",0);
 }
 
 //---------------------------------------------------------                                      
@@ -222,7 +285,7 @@ void OptSensor::handleMailMissionParams(std::string str)
       }
       std::cout<<"min x: "<<m_search_reg_x_min<<" max x: "<<m_search_reg_x_max<<std::endl;
       std::cout<<"min y: "<<m_search_reg_y_min<<" max y: "<<m_search_reg_y_max<<std::endl;
-
+      m_search_config_received = true;
      
     
     
@@ -240,15 +303,46 @@ void OptSensor::handleMailMissionParams(std::string str)
 
 void OptSensor::handleMailSensorOptionsSummary(std::string str) {
   //std::cout<<"handle sensor options"<<std::endl;
-  vector<string> svector = parseStringZ(str, ',', "{");
-  unsigned int i, vsize = svector.size();
-  for(i=0; i<vsize; i++) {
-    string param = biteStringX(svector[i], '=');
-    string value = svector[i];
-    // This needs to be handled by the developer. Just a placeholder.                                                       
-    // std::cout<<"sensor: "<<param<<", "<<value<<std::endl;
-  }
+  if   (m_sensor_options_received == false){
+    //Get rid of ':'
+    vector<string> str_vector = parseString(str, ':');
+    for(unsigned int i=0; i<str_vector.size(); i++)
+      {cout << "sensor options: [" << str_vector[i] << "]" << endl;
+      }
 
+    unsigned int i, vsize = str_vector.size();
+    for(i=0; i<vsize; i++) {
+      std::cout<<"current string: "<<str_vector[i]<<std::endl;
+      string param = biteStringX(str_vector[i], '=');
+      string value = str_vector[i];
+      // This needs to be handled by the developer. Just a placeholder.                                                       
+      std::cout<<"sensor: "<<param<<", "<<value<<std::endl;
+      if (param=="width"){
+	stringstream ww;
+	double temp_width =0.0;
+	ww<<value;
+	ww>>temp_width;
+	m_sensor_width.push_back(temp_width);
+      }
+    }
+  m_sensor_options_received = true;
+  }
  
 }
 
+//--------------------------
+// Calc search area
+
+
+
+
+
+
+
+double OptSensor::calcSearchTime(double sensor_width,double search_area_width,double search_area_height){
+  double lane_width = sensor_width/2.0;
+  double num_lanes = search_area_width/lane_width;
+    double total_dist = search_area_height*(num_lanes+1)+search_area_width;
+    std::cout<<"lane width: "<<lane_width<<"num of lanes: "<<num_lanes<<"total dist: "<<total_dist<<std::endl;
+  return (total_dist/2.0);
+}

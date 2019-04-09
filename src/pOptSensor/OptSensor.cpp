@@ -31,6 +31,7 @@ OptSensor::OptSensor()
   m_search_config_received = false;
   m_update_lawnmower = false;
   m_sensor_options_received = false;
+  m_name_received = false;
   // ADD THIS LATER  m_buffer =1000.0;
 }
 
@@ -52,7 +53,9 @@ bool OptSensor::OnNewMail(MOOSMSG_LIST &NewMail)
     CMOOSMsg &msg = *p;
     string key   = msg.GetKey();
     string sval  = msg.GetString();
-    std::cout<<"Message: "<<key<<", val: "<<sval<<std::endl;
+   
+      //    std::cout<<"message: "<<key<<"value: "<<sval<<std::endl;
+   
     if (key == "UHZ_OPTIONS_SUMMARY"){
       //      std::cout<<"options summary: "<<sval<<std::endl;
       handleMailSensorOptionsSummary(sval);
@@ -61,6 +64,15 @@ bool OptSensor::OnNewMail(MOOSMSG_LIST &NewMail)
       std::cout<<"mission params: "<<sval<<std::endl;
       handleMailMissionParams(sval);
 
+    }
+
+    if (key == "PHI_HOST_INFO"){ 
+      //PHI_HOST_INFO                               "community=jake,hostip=18.21.140.34,port_db=9001,pshare_iroutes=18.21.140.34:9301,hostip_alts=,timewarp=10"
+      
+      m_vname = tokStringParse(sval, "community", ',', '=');
+     
+      m_name_received = true;
+      
     }
 #if 0 // Keep these around just for template
     string key   = msg.GetKey();
@@ -97,8 +109,8 @@ bool OptSensor::OnConnectToServer()
 
 bool OptSensor::Iterate()
 {
-
-  if ((m_search_config_received == true)&&(m_update_lawnmower ==false)){
+  // std::cout<<"status: "<<m_name_received<<","<<m_search_config_received<<","<<m_update_lawnmower<<std::endl;
+  if ((m_name_received==true)&&(m_search_config_received == true)&&(m_update_lawnmower ==false)){
     std::cout<<"********************* SENSOR WIDTH*****"<<std::endl;
     //    msensor_width.push_back(temp_width);
 
@@ -122,13 +134,29 @@ bool OptSensor::Iterate()
       //lawnmower str:  points = format=lawnmower, label=foxtrot, x=0, y=40, height=60, width=180,lane_width=15, rows=north-south, startx=20, starty=-300, degs=45
       ostringstream os;
       double lane_width = m_sensor_width[best_sensor_width_index]/2.0;
-      double y_center = m_search_reg_y_min +(m_search_reg_y_max-m_search_reg_y_min)/2.0; //Assuming split btw two robots
-      double x_center =m_search_reg_x_min +(m_search_reg_x_max-m_search_reg_x_min)/4.0;
+      double y_center = m_search_reg_y_min +(m_search_reg_y_max-m_search_reg_y_min)/2.0; 
 
-      os << "points = format=lawnmower, label=jakesearch, x=" <<x_center<<",y="<< y_center<<",height="<<sa_height<<",width="<<sa_width<<",lane_width="<<lane_width<<",rows=ns,startx="<<m_search_reg_x_min<<",starty="<<m_search_reg_y_max;
+      //Assuming split btw two robots
+      double x_center;
+      if (m_vname =="jake"){
+	x_center =m_search_reg_x_min +(m_search_reg_x_max-m_search_reg_x_min)/4.0;
+      }
+      else{ //other vehicle
+        x_center =m_search_reg_x_max -(m_search_reg_x_max-m_search_reg_x_min)/4.0;
+      }
+      os << "points = format=lawnmower, label="<<m_vname<<"search, x=" <<x_center<<",y="<< y_center<<",height="<<sa_height<<",width="<<sa_width<<",lane_width="<<lane_width<<",rows=ns,startx="<<m_search_reg_x_min<<",starty="<<m_search_reg_y_max;
       string lawnmower_str = os.str();
       std::cout<<"lawnmower update: "<<lawnmower_str<<std::endl;
       Notify("LAWNMOWER_UPDATES", lawnmower_str);
+      
+      ostringstream os_config;
+      // UHZ_CONFIG_REQUEST                   "vname=jake,width=50,pd=0.7"
+      //TO DO : Add vname
+      // Pd function , this is the first time so very large
+      os_config<<"vname="<<m_vname<<",width="<<m_sensor_width[best_sensor_width_index]<<",pd=0.9";
+      string uhz_config_request_str = os_config.str();
+      Notify("UHZ_CONFIG_REQUEST",uhz_config_request_str);
+
       m_update_lawnmower = true;
   };
 
@@ -171,6 +199,8 @@ void OptSensor::RegisterVariables()
   // Register("FOOBAR", 0);
   Register("UHZ_MISSION_PARAMS",0);
   Register("UHZ_OPTIONS_SUMMARY",0);
+  Register("PHI_HOST_INFO",0);
+  
 }
 
 //---------------------------------------------------------                                      

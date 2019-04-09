@@ -46,6 +46,8 @@ class OptSensor : public CMOOSApp
    bool m_sensor_options_received;
    bool m_update_lawnmower;
    bool m_search_config_received;
+   std::string m_vname; 
+   bool m_name_received;
  private: // State variables
 };
 
