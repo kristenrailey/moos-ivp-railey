@@ -202,7 +202,7 @@ void HazardMgrX::postSensorConfigRequest()
 
   m_sensor_config_requested = true;
   m_sensor_config_reqs++;
-  // Commented out by KR 4/9/19 3:58 pm.  Notify("UHZ_CONFIG_REQUEST", request);
+  Notify("UHZ_CONFIG_REQUEST", request);
 }
 
 //---------------------------------------------------------
