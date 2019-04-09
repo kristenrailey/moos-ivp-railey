@@ -61,7 +61,7 @@ bool OptSensor::OnNewMail(MOOSMSG_LIST &NewMail)
       handleMailSensorOptionsSummary(sval);
     }
     if(key == "UHZ_MISSION_PARAMS"){
-      std::cout<<"mission params: "<<sval<<std::endl;
+      //std::cout<<"mission params: "<<sval<<std::endl;
       handleMailMissionParams(sval);
 
     }
@@ -114,7 +114,7 @@ bool OptSensor::Iterate()
     std::cout<<"********************* SENSOR WIDTH*****"<<std::endl;
     //    msensor_width.push_back(temp_width);
 
-    std::cout<<m_sensor_width[0]<<", "<<m_sensor_width[1]<<","<<m_sensor_width[2]<<std::endl;
+    std::cout<<m_sensor_width[0]<<", "<<m_sensor_width[1]<<","<<m_sensor_width[2]<<","<<m_sensor_width[3]<<std::endl;
       //calcSearchTime(sensor_width,search_area_width,search_area_height);
     int best_sensor_width_index;
     double sa_height = m_search_reg_y_max-m_search_reg_y_min;
@@ -133,7 +133,9 @@ bool OptSensor::Iterate()
       std::cout<<"updated lawnmower, best sensor width: "<< m_sensor_width[best_sensor_width_index]<<std::endl;
       //lawnmower str:  points = format=lawnmower, label=foxtrot, x=0, y=40, height=60, width=180,lane_width=15, rows=north-south, startx=20, starty=-300, degs=45
       ostringstream os;
-      double lane_width = m_sensor_width[best_sensor_width_index]/2.0;
+      //      double lane_width = m_sensor_width[best_sensor_width_index]/2.0;
+      double lane_width = m_sensor_width[best_sensor_width_index]; //FACTOR OF TWO 
+
       double y_center = m_search_reg_y_min +(m_search_reg_y_max-m_search_reg_y_min)/2.0; 
 
       //Assuming split btw two robots
@@ -217,19 +219,19 @@ void OptSensor::RegisterVariables()
 
 void OptSensor::handleMailMissionParams(std::string str)
 { 
-  std::cout<<"handle mail mission param: "<<str<<std::endl;
+  //std::cout<<"handle mail mission param: "<<str<<std::endl;
   vector<string> svector = parseStringZ(str, ',', "{");
   unsigned int i, vsize = svector.size();
   for(i=0; i<vsize; i++) {
     string param = biteStringX(svector[i], '=');
     string value = svector[i];
     // This needs to be handled by the developer. Just a placeholder.                            
-    std::cout<<"mission params: "<<param<<", "<<value<<std::endl;
+    //std::cout<<"mission params: "<<param<<", "<<value<<std::endl;
     stringstream ss;
     ss<<value;
     if (i == 0){
       ss>>m_penalty_missed_hazard;
-      std::cout<<"missed hazard:"<<m_penalty_missed_hazard<<std::endl;
+      //std::cout<<"missed hazard:"<<m_penalty_missed_hazard<<std::endl;
     }
     else if (i==1){
       ss>>m_penalty_nonopt_hazard;
@@ -239,7 +241,7 @@ void OptSensor::handleMailMissionParams(std::string str)
     }
     else if (i==3){
       ss>>m_penalty_max_time_over;
-      std::cout<<"max time over: "<<m_penalty_max_time_over<<std::endl;
+      //std::cout<<"max time over: "<<m_penalty_max_time_over<<std::endl;
     }
     else if (i==4){
       ss>>m_max_time;
@@ -251,12 +253,12 @@ void OptSensor::handleMailMissionParams(std::string str)
       ss>>m_transit_path_width;
     }
     else if (i==7){ //Search region
-      std::cout<<"search region"<< value<<std::endl;
+      //std::cout<<"search region"<< value<<std::endl;
       string pts_str = tokStringParse(value, "search_region = pts=", ',', '=');
       string search_region_str_left = biteStringX(value, '{');
-      std::cout<<"new string: "<<pts_str<<std::endl;
+      //std::cout<<"new string: "<<pts_str<<std::endl;
       string final_pts_str = biteStringX(value,'}');
-      std::cout<<"final string: "<<final_pts_str<<std::endl;
+      //std::cout<<"final string: "<<final_pts_str<<std::endl;
       vector<string> str_vector_pts = parseString(final_pts_str, ':');
       
       
@@ -273,7 +275,7 @@ void OptSensor::handleMailMissionParams(std::string str)
 	xx>>temp_x;
 	yy<<str_vector_xy[1];
 	yy>>temp_y;
-	std::cout<<"temp x: "<<temp_x<<", temp y: "<<temp_y<<std::endl;
+	//std::cout<<"temp x: "<<temp_x<<", temp y: "<<temp_y<<std::endl;
 	if (temp_x>m_search_reg_x_max){
 	  m_search_reg_x_max = temp_x;
 	}
@@ -287,8 +289,8 @@ void OptSensor::handleMailMissionParams(std::string str)
 	  m_search_reg_y_min = temp_y;
 	}
       }
-      std::cout<<"min x: "<<m_search_reg_x_min<<" max x: "<<m_search_reg_x_max<<std::endl;
-      std::cout<<"min y: "<<m_search_reg_y_min<<" max y: "<<m_search_reg_y_max<<std::endl;
+      //std::cout<<"min x: "<<m_search_reg_x_min<<" max x: "<<m_search_reg_x_max<<std::endl;
+      //std::cout<<"min y: "<<m_search_reg_y_min<<" max y: "<<m_search_reg_y_max<<std::endl;
       m_search_config_received = true;
      
     
@@ -311,16 +313,16 @@ void OptSensor::handleMailSensorOptionsSummary(std::string str) {
     //Get rid of ':'
     vector<string> str_vector = parseString(str, ':');
     for(unsigned int i=0; i<str_vector.size(); i++)
-      {cout << "sensor options: [" << str_vector[i] << "]" << endl;
+      {//cout << "sensor options: [" << str_vector[i] << "]" << endl;
       }
 
     unsigned int i, vsize = str_vector.size();
     for(i=0; i<vsize; i++) {
-      std::cout<<"current string: "<<str_vector[i]<<std::endl;
+      //std::cout<<"current string: "<<str_vector[i]<<std::endl;
       string param = biteStringX(str_vector[i], '=');
       string value = str_vector[i];
       // This needs to be handled by the developer. Just a placeholder.                                                       
-      std::cout<<"sensor: "<<param<<", "<<value<<std::endl;
+      //std::cout<<"sensor: "<<param<<", "<<value<<std::endl;
       if (param=="width"){
 	stringstream ww;
 	double temp_width =0.0;
@@ -344,7 +346,9 @@ void OptSensor::handleMailSensorOptionsSummary(std::string str) {
 
 
 double OptSensor::calcSearchTime(double sensor_width,double search_area_width,double search_area_height){
-  double lane_width = sensor_width/2.0;
+  // double lane_width = sensor_width/2.0;
+  double lane_width = sensor_width; //Factor of 2.0 from swath width disagreement                                                                                                                                                                        
+
   double num_lanes = search_area_width/lane_width;
     double total_dist = search_area_height*(num_lanes+1)+search_area_width;
     std::cout<<"lane width: "<<lane_width<<"num of lanes: "<<num_lanes<<"total dist: "<<total_dist<<std::endl;
