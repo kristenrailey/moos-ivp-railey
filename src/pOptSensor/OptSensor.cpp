@@ -31,7 +31,7 @@ OptSensor::OptSensor()
   m_search_config_received = false;
   m_update_lawnmower = false;
   m_sensor_options_received = false;
-  
+  // ADD THIS LATER  m_buffer =1000.0;
 }
 
 //---------------------------------------------------------
@@ -100,11 +100,25 @@ bool OptSensor::Iterate()
 
   if ((m_search_config_received == true)&&(m_update_lawnmower ==false)){
     std::cout<<"********************* SENSOR WIDTH*****"<<std::endl;
-    //    m_sensor_width.push_back(temp_width);
+    //    msensor_width.push_back(temp_width);
 
     std::cout<<m_sensor_width[0]<<", "<<m_sensor_width[1]<<","<<m_sensor_width[2]<<std::endl;
       //calcSearchTime(sensor_width,search_area_width,search_area_height);
-      std::cout<<"updated lawnmower"<<std::endl;
+    int best_sensor_width_index;
+    double sa_height = m_search_reg_y_max-m_search_reg_y_min;
+    double sa_width = m_search_reg_x_max-m_search_reg_x_min;
+    std::cout<<"sa width: "<<sa_width<<", sa height: "<<sa_height<<std::endl;
+    double best_time = 10000.0;
+    for (int i = 0; i<m_sensor_width.size(); i++){
+      double current_time = calcSearchTime(m_sensor_width[i],sa_width,sa_height);
+      std::cout<<"current time: "<<current_time<<std::endl;
+      if ((current_time<m_max_time)&&(current_time<best_time)){
+	  //New best
+	  best_time = current_time;
+	  best_sensor_width_index = i;
+      }
+    }  
+      std::cout<<"updated lawnmower, best sensor width: "<< m_sensor_width[best_sensor_width_index]<<std::endl;
       m_update_lawnmower = true;
   };
 
@@ -292,6 +306,7 @@ void OptSensor::handleMailSensorOptionsSummary(std::string str) {
 double OptSensor::calcSearchTime(double sensor_width,double search_area_width,double search_area_height){
   double lane_width = sensor_width/2.0;
   double num_lanes = search_area_width/lane_width;
-    double total_dist = search_area_height*(2*num_lanes)+search_area_width;
+    double total_dist = search_area_height*(num_lanes+1)+search_area_width;
+    std::cout<<"lane width: "<<lane_width<<"num of lanes: "<<num_lanes<<"total dist: "<<total_dist<<std::endl;
   return (total_dist/2.0);
 }
