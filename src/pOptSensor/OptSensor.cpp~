@@ -37,12 +37,13 @@ bool OptSensor::OnNewMail(MOOSMSG_LIST &NewMail)
     CMOOSMsg &msg = *p;
     string key   = msg.GetKey();
     string sval  = msg.GetString();
-    std::cout<<"Message: "<<key<<std::endl;
+    std::cout<<"Message: "<<key<<", val: "<<sval<<std::endl;
     if (key == "UHZ_OPTIONS_SUMMARY"){
+      //      std::cout<<"options summary: "<<sval<<std::endl;
       handleMailSensorOptionsSummary(sval);
 
     if(key == "UHZ_MISSION_PARAMS")
-      // std::cout<<"sval: "<<sval<<std::endl;
+      std::cout<<"mission params: "<<sval<<std::endl;
       handleMailMissionParams(sval);
 
     }
@@ -135,14 +136,14 @@ void OptSensor::RegisterVariables()
 
 void OptSensor::handleMailMissionParams(std::string str)
 { 
-  std::cout<<"handle mail mission param"<<std::endl;
+  std::cout<<"handle mail mission param: "<<str<<std::endl;
   vector<string> svector = parseStringZ(str, ',', "{");
   unsigned int i, vsize = svector.size();
   for(i=0; i<vsize; i++) {
     string param = biteStringX(svector[i], '=');
     string value = svector[i];
     // This needs to be handled by the developer. Just a placeholder.                            
-    std::cout<<"mission params: "<<param<<", "<<value<<std::endl;
+    //std::cout<<"mission params: "<<param<<", "<<value<<std::endl;
   }
 }
 
@@ -152,14 +153,14 @@ void OptSensor::handleMailMissionParams(std::string str)
 //    UHZ_OPTIONS_SUMMARY = width=10,exp=6,class=0.91:width=25,exp=4,class=0.85:width=50,exp=2,class=0.78                 
 
 void OptSensor::handleMailSensorOptionsSummary(std::string str) {
-  std::cout<<"handle sensor options"<<std::endl;
+  //std::cout<<"handle sensor options"<<std::endl;
   vector<string> svector = parseStringZ(str, ',', "{");
   unsigned int i, vsize = svector.size();
   for(i=0; i<vsize; i++) {
     string param = biteStringX(svector[i], '=');
     string value = svector[i];
     // This needs to be handled by the developer. Just a placeholder.                                                       
-    std::cout<<"sensor: "<<param<<", "<<value<<std::endl;
+    // std::cout<<"sensor: "<<param<<", "<<value<<std::endl;
   }
 
  

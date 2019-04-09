@@ -17,6 +17,15 @@ using namespace std;
 
 OptSensor::OptSensor()
 {
+  m_penalty_missed_hazard = 0.0;
+  m_penalty_nonopt_hazard = 0.0; //?
+  m_penalty_false_alarm = 0.0;
+  m_penalty_max_time = 0.0;
+  m_max_time =0.0;
+  m_penalty_max_time_rate = 0.0;
+  m_transit_path_width = 0.0; //?
+
+  
 }
 
 //---------------------------------------------------------
@@ -37,13 +46,13 @@ bool OptSensor::OnNewMail(MOOSMSG_LIST &NewMail)
     CMOOSMsg &msg = *p;
     string key   = msg.GetKey();
     string sval  = msg.GetString();
-    std::cout<<"Message: "<<key<<std::endl;
+    std::cout<<"Message: "<<key<<", val: "<<sval<<std::endl;
     if (key == "UHZ_OPTIONS_SUMMARY"){
-      std::cout<<"options summary: "<<sval<<std::endl;
+      //      std::cout<<"options summary: "<<sval<<std::endl;
       handleMailSensorOptionsSummary(sval);
-
-    if(key == "UHZ_MISSION_PARAMS")
-      // std::cout<<"sval: "<<sval<<std::endl;
+    }
+    if(key == "UHZ_MISSION_PARAMS"){
+      std::cout<<"mission params: "<<sval<<std::endl;
       handleMailMissionParams(sval);
 
     }
@@ -134,9 +143,10 @@ void OptSensor::RegisterVariables()
 //                       search_region = pts={-150,-75:-150,-50:40,-50:40,-75}                   
 
 
+
 void OptSensor::handleMailMissionParams(std::string str)
 { 
-  std::cout<<"handle mail mission param"<<std::endl;
+  std::cout<<"handle mail mission param: "<<str<<std::endl;
   vector<string> svector = parseStringZ(str, ',', "{");
   unsigned int i, vsize = svector.size();
   for(i=0; i<vsize; i++) {
@@ -144,6 +154,28 @@ void OptSensor::handleMailMissionParams(std::string str)
     string value = svector[i];
     // This needs to be handled by the developer. Just a placeholder.                            
     std::cout<<"mission params: "<<param<<", "<<value<<std::endl;
+    stringstream ss;
+    ss<<value;
+    if (i == 0){
+      ss>>m_penalty_missed_hazard;
+    }
+    else if (i==1){
+      ss>>m_penalty_nonopt_hazard;
+    }
+    else if (i==2){
+      ss>>m_penalty_false_alarm;
+    }
+    else if (i==3){
+      ss>>m_penalty_max_time;
+    }
+    else if (i==4){
+      ss>>m_penalty_max_time_rate;
+    }
+    else if (i==5){
+      ss>>m_transit_path_width;
+    }
+    else{ //Search region
+    }
   }
 }
 
@@ -153,14 +185,14 @@ void OptSensor::handleMailMissionParams(std::string str)
 //    UHZ_OPTIONS_SUMMARY = width=10,exp=6,class=0.91:width=25,exp=4,class=0.85:width=50,exp=2,class=0.78                 
 
 void OptSensor::handleMailSensorOptionsSummary(std::string str) {
-  std::cout<<"handle sensor options"<<std::endl;
+  //std::cout<<"handle sensor options"<<std::endl;
   vector<string> svector = parseStringZ(str, ',', "{");
   unsigned int i, vsize = svector.size();
   for(i=0; i<vsize; i++) {
     string param = biteStringX(svector[i], '=');
     string value = svector[i];
     // This needs to be handled by the developer. Just a placeholder.                                                       
-    std::cout<<"sensor: "<<param<<", "<<value<<std::endl;
+    // std::cout<<"sensor: "<<param<<", "<<value<<std::endl;
   }
 
  
