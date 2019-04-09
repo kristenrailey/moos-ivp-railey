@@ -28,7 +28,9 @@ OptSensor::OptSensor()
   m_search_reg_y_min = 10000.0;
   m_search_reg_x_max = -10000.0;
   m_search_reg_y_max = -10000.0;
-
+  m_search_config_received = false;
+  m_update_lawnmower = false;
+  m_sensor_options_received = false;
   
 }
 
@@ -95,6 +97,17 @@ bool OptSensor::OnConnectToServer()
 
 bool OptSensor::Iterate()
 {
+
+  if ((m_search_config_received == true)&&(m_update_lawnmower ==false)){
+    std::cout<<"********************* SENSOR WIDTH*****"<<std::endl;
+    //    m_sensor_width.push_back(temp_width);
+
+    std::cout<<m_sensor_width[0]<<", "<<m_sensor_width[1]<<","<<m_sensor_width[2]<<std::endl;
+      //calcSearchTime(sensor_width,search_area_width,search_area_height);
+      std::cout<<"updated lawnmower"<<std::endl;
+      m_update_lawnmower = true;
+  };
+
   return(true);
 }
 
@@ -222,7 +235,7 @@ void OptSensor::handleMailMissionParams(std::string str)
       }
       std::cout<<"min x: "<<m_search_reg_x_min<<" max x: "<<m_search_reg_x_max<<std::endl;
       std::cout<<"min y: "<<m_search_reg_y_min<<" max y: "<<m_search_reg_y_max<<std::endl;
-
+      m_search_config_received = true;
      
     
     
@@ -240,15 +253,45 @@ void OptSensor::handleMailMissionParams(std::string str)
 
 void OptSensor::handleMailSensorOptionsSummary(std::string str) {
   //std::cout<<"handle sensor options"<<std::endl;
-  vector<string> svector = parseStringZ(str, ',', "{");
-  unsigned int i, vsize = svector.size();
-  for(i=0; i<vsize; i++) {
-    string param = biteStringX(svector[i], '=');
-    string value = svector[i];
-    // This needs to be handled by the developer. Just a placeholder.                                                       
-    // std::cout<<"sensor: "<<param<<", "<<value<<std::endl;
-  }
+  if   (m_sensor_options_received == false){
+    //Get rid of ':'
+    vector<string> str_vector = parseString(str, ':');
+    for(unsigned int i=0; i<str_vector.size(); i++)
+      {cout << "sensor options: [" << str_vector[i] << "]" << endl;
+      }
 
+    unsigned int i, vsize = str_vector.size();
+    for(i=0; i<vsize; i++) {
+      std::cout<<"current string: "<<str_vector[i]<<std::endl;
+      string param = biteStringX(str_vector[i], '=');
+      string value = str_vector[i];
+      // This needs to be handled by the developer. Just a placeholder.                                                       
+      std::cout<<"sensor: "<<param<<", "<<value<<std::endl;
+      if (param=="width"){
+	stringstream ww;
+	double temp_width =0.0;
+	ww<<value;
+	ww>>temp_width;
+	m_sensor_width.push_back(temp_width);
+      }
+    }
+  m_sensor_options_received = true;
+  }
  
 }
 
+//--------------------------
+// Calc search area
+
+
+
+
+
+
+
+double OptSensor::calcSearchTime(double sensor_width,double search_area_width,double search_area_height){
+  double lane_width = sensor_width/2.0;
+  double num_lanes = search_area_width/lane_width;
+    double total_dist = search_area_height*(2*num_lanes)+search_area_width;
+  return (total_dist/2.0);
+}

@@ -27,6 +27,7 @@ class OptSensor : public CMOOSApp
    //From HazardMgr
    void handleMailSensorOptionsSummary(std::string);
    void handleMailMissionParams(std::string);
+   double calcSearchTime(double sensor_width,double search_area_width,double search_area_height);
 
 
  private: // Configuration variables
@@ -41,7 +42,10 @@ class OptSensor : public CMOOSApp
    double m_search_reg_x_max;
    double m_search_reg_y_min;
    double m_search_reg_y_max;
-
+   std::vector<double> m_sensor_width;
+   bool m_sensor_options_received;
+   bool m_update_lawnmower;
+   bool m_search_config_received;
  private: // State variables
 };
 

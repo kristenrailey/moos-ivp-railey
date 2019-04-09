@@ -37,6 +37,11 @@ class OptSensor : public CMOOSApp
    double m_max_time;
    double m_penalty_max_time_rate;
    double m_transit_path_width; //?
+   double m_search_reg_x_min;
+   double m_search_reg_x_max;
+   double m_search_reg_y_min;
+   double m_search_reg_y_max;
+
  private: // State variables
 };
 
