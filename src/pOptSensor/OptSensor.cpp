@@ -24,6 +24,10 @@ OptSensor::OptSensor()
   m_max_time =0.0;
   m_penalty_max_time_rate = 0.0;
   m_transit_path_width = 0.0; //?
+  m_search_reg_x_min = 10000.0;
+  m_search_reg_y_min = 10000.0;
+  m_search_reg_x_max = -10000.0;
+  m_search_reg_y_max = -10000.0;
 
   
 }
@@ -176,11 +180,55 @@ void OptSensor::handleMailMissionParams(std::string str)
     else if (i==5){
       ss>>m_penalty_max_time_rate;
     }
-    else if (i==5){
+    else if (i==6){
       ss>>m_transit_path_width;
     }
-    else{ //Search region
+    else if (i==7){ //Search region
       std::cout<<"search region"<< value<<std::endl;
+      string pts_str = tokStringParse(value, "search_region = pts=", ',', '=');
+      string search_region_str_left = biteStringX(value, '{');
+      std::cout<<"new string: "<<pts_str<<std::endl;
+      string final_pts_str = biteStringX(value,'}');
+      std::cout<<"final string: "<<final_pts_str<<std::endl;
+      vector<string> str_vector_pts = parseString(final_pts_str, ':');
+      
+      
+      
+      
+      
+      
+      for (int i = 0; i<4; i++){
+	vector<string> str_vector_xy = parseString(str_vector_pts[i], ',');
+	stringstream xx,yy;
+	double temp_x = 0.0;
+	double temp_y=0.0;
+	xx<<str_vector_xy[0];
+	xx>>temp_x;
+	yy<<str_vector_xy[1];
+	yy>>temp_y;
+	std::cout<<"temp x: "<<temp_x<<", temp y: "<<temp_y<<std::endl;
+	if (temp_x>m_search_reg_x_max){
+	  m_search_reg_x_max = temp_x;
+	}
+	if (temp_y>m_search_reg_y_max){
+	  m_search_reg_y_max = temp_y;
+	}
+	if (temp_x<m_search_reg_x_min){
+	  m_search_reg_x_min = temp_x;
+	}
+	if (temp_y<m_search_reg_y_min){
+	  m_search_reg_y_min = temp_y;
+	}
+      }
+      std::cout<<"min x: "<<m_search_reg_x_min<<" max x: "<<m_search_reg_x_max<<std::endl;
+      std::cout<<"min y: "<<m_search_reg_y_min<<" max y: "<<m_search_reg_y_max<<std::endl;
+
+     
+    
+    
+    
+    
+
     }
   }
 }

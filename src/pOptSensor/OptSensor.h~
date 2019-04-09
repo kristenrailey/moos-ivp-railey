@@ -33,7 +33,7 @@ class OptSensor : public CMOOSApp
    double m_penalty_missed_hazard;
    double m_penalty_nonopt_hazard; //?                                                                       
    double m_penalty_false_alarm;
-   double m_penalty_max_time;
+   double m_penalty_max_time_over;
    double m_max_time;
    double m_penalty_max_time_rate;
    double m_transit_path_width; //?
