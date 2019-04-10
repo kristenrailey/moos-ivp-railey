@@ -10,6 +10,10 @@
 #include "OptSensor.h"
 #include <iostream>
 
+#include <algorithm>
+#include <vector>
+#include <cmath>
+
 using namespace std;
 
 //---------------------------------------------------------
@@ -137,8 +141,12 @@ bool OptSensor::Iterate()
     std::cout<<m_sensor_width[0]<<", "<<m_sensor_width[1]<<","<<m_sensor_width[2]<<","<<m_sensor_width[3]<<std::endl;
       //calcSearchTime(sensor_width,search_area_width,search_area_height);
     int best_sensor_width_index;
-    double sa_height = (m_search_reg_y_max-m_search_reg_y_min)+m_height_buffer;
-    double sa_width = (m_search_reg_x_max-m_search_reg_x_min)/2.0; //Areas are split between the two robots
+    //    double sa_height = (m_search_reg_y_max-m_search_reg_y_min)+m_height_buffer;
+    //double sa_width = (m_search_reg_x_max-m_search_reg_x_min)/2.0; //Areas are split between the two robots
+    //top -bottom search
+    double sa_height = ((m_search_reg_y_max-m_search_reg_y_min))/2.0;
+    double sa_width = (m_search_reg_x_max-m_search_reg_x_min)+m_height_buffer; //Areas are split between the two robots    
+
     std::cout<<"sa width: "<<sa_width<<", sa height: "<<sa_height<<std::endl;
     double best_time = 0.0;
     for (int i = 0; i<m_sensor_width.size(); i++){
@@ -150,7 +158,8 @@ bool OptSensor::Iterate()
 	  best_sensor_width_index = i;
       }
     }  
-      std::cout<<"updated lawnmower, best sensor width: "<< m_sensor_width[best_sensor_width_index]<<std::endl;
+    std::cout<<"updated lawnmower, best sensor width: "<< m_sensor_width[best_sensor_width_index]<<", exp: "<<m_sensor_exp[best_sensor_width_index]<<std::endl;
+    std::cout<<" calculated optimal Pd: "<< calcOptPd(m_sensor_exp[best_sensor_width_index]) <<std::endl;
       
       ostringstream os;
       
@@ -163,17 +172,18 @@ bool OptSensor::Iterate()
       //Assuming split btw two robots
       //double x_center;
         double y_center;                                                                                                                                                                                           
-
+	double start_y;
       if (m_vname =="jake"){
 	//x_center =m_search_reg_x_min +(m_search_reg_x_max-m_search_reg_x_min)/4.0;
 	y_center = m_search_reg_y_min +(m_search_reg_y_max-m_search_reg_y_min)*3.0/4.0;                                                                                                                         
-
+	start_y = m_search_reg_y_max;
       }
       else{ //other vehicle
 	//  x_center =m_search_reg_x_max -(m_search_reg_x_max-m_search_reg_x_min)/4.0;
-        y_center = m_search_reg_y_min +(m_search_reg_y_max-m_search_reg_y_min)/4.0;                                                                                                                         
+        y_center = m_search_reg_y_min +(m_search_reg_y_max-m_search_reg_y_min)/4.0;
+	start_y = m_search_reg_y_min;
       }
-      os << "points = format=lawnmower, label="<<m_vname<<"search, x=" <<x_center<<",y="<< y_center<<",height="<<sa_height<<",width="<<sa_width<<",lane_width="<<lane_width<<",rows=ew,startx="<<m_search_reg_x_min<<",starty="<<m_search_reg_y_max;
+      os << "points = format=lawnmower, label="<<m_vname<<"search, x=" <<x_center<<",y="<< y_center<<",height="<<sa_height<<",width="<<sa_width<<",lane_width="<<lane_width<<",rows=ew,startx="<<m_search_reg_x_min<<",starty="<<start_y;
       string lawnmower_str = os.str();
       std::cout<<"lawnmower update: "<<lawnmower_str<<std::endl;
       Notify("LAWNMOWER_UPDATES", lawnmower_str);
@@ -345,18 +355,28 @@ void OptSensor::handleMailSensorOptionsSummary(std::string str) {
 
     unsigned int i, vsize = str_vector.size();
     for(i=0; i<vsize; i++) {
-      //std::cout<<"current string: "<<str_vector[i]<<std::endl;
-      string param = biteStringX(str_vector[i], '=');
-      string value = str_vector[i];
+      std::cout<<"current string: "<<str_vector[i]<<std::endl;
+      //string param = biteStringX(str_vector[i], '=');
+      //string value = str_vector[i];
       // This needs to be handled by the developer. Just a placeholder.                                                       
-      //std::cout<<"sensor: "<<param<<", "<<value<<std::endl;
-      if (param=="width"){
-	stringstream ww;
-	double temp_width =0.0;
-	ww<<value;
-	ww>>temp_width;
-	m_sensor_width.push_back(temp_width);
-      }
+      string param_width = tokStringParse(str_vector[i], "width", ',', '=');
+      string param_exp = tokStringParse(str_vector[i],"exp",',','=');
+      std::cout<<"params: (width) "<<param_width<<", (exp): "<<param_exp<<std::endl;
+      // if (param_width=="width"){
+      stringstream ww;
+      double temp_width =0.0;
+      ww<<param_width;
+      ww>>temp_width;
+      m_sensor_width.push_back(temp_width);
+	// }
+	// if (param_exp=="exp"){
+      stringstream ee;
+      double temp_exp =0.0;
+      ee<<param_exp;
+      ee>>temp_exp;
+      m_sensor_exp.push_back(temp_exp);
+      std::cout<<"added exp: "<<temp_exp<<std::endl;
+      //}
     }
   m_sensor_options_received = true;
   }
@@ -386,4 +406,33 @@ double OptSensor::calcSearchTime(double num_passes, double sensor_width,double s
 double OptSensor::calcPd(double current_Pd){
   return current_Pd-.1; //Non optimized for now
 
+}
+
+double OptSensor::calcOptPd(double exp){
+  std::vector<double> v(100);
+  //  std::cout << "v: ";
+  double k = 0.0;
+  for (int i=0;i<v.size();i++) {
+    v[i]=k;
+    k = k+0.01;
+    //std::cout << v[i] << " ";
+  }
+  std::cout << "\n";
+  double dist = 0.0;
+  //double exp = 20.0;
+  double Pd,Pfa;
+  double current_min = 1.0;
+  double best_Pd, best_Pfa;
+  for (int ii = 0; ii<v.size();ii++){
+    Pd = v[ii];
+    Pfa = pow(Pd,exp);
+    dist = pow( pow((Pfa-0.0),2)+pow((Pd-1.0),2) ,0.5);
+    if (dist<current_min){
+      current_min = dist;
+      best_Pd = Pd;
+      best_Pfa = Pfa;
+    }
+  }
+  //std::cout<<"exp: "<<exp<<", Pd: "<<best_Pd<<", Pfa: "<<best_Pfa<<std::endl;
+  return best_Pd;
 }
