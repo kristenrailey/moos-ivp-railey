@@ -34,7 +34,7 @@ OptSensor::OptSensor()
   m_sensor_options_received = false;
   m_name_received = false;
   m_finished_search = "false";
-  m_num_passes =3.0;
+  m_num_passes =2.0;
   
   m_time_buffer=1000.0;
   m_height_buffer=20.0;
@@ -151,22 +151,29 @@ bool OptSensor::Iterate()
       }
     }  
       std::cout<<"updated lawnmower, best sensor width: "<< m_sensor_width[best_sensor_width_index]<<std::endl;
-      //lawnmower str:  points = format=lawnmower, label=foxtrot, x=0, y=40, height=60, width=180,lane_width=15, rows=north-south, startx=20, starty=-300, degs=45
+      
       ostringstream os;
-      //      double lane_width = m_sensor_width[best_sensor_width_index]/2.0;
+      
       double lane_width = m_sensor_width[best_sensor_width_index]; //FACTOR OF TWO 
 
-      double y_center = m_search_reg_y_min +(m_search_reg_y_max-m_search_reg_y_min)/2.0; 
+      //Switch x and y center as needed 
+      //double y_center = m_search_reg_y_min +(m_search_reg_y_max-m_search_reg_y_min)/2.0; 
+      double x_center =m_search_reg_x_min +(m_search_reg_x_max-m_search_reg_x_min)/2.0;                                                                                                                               
 
       //Assuming split btw two robots
-      double x_center;
+      //double x_center;
+        double y_center;                                                                                                                                                                                           
+
       if (m_vname =="jake"){
-	x_center =m_search_reg_x_min +(m_search_reg_x_max-m_search_reg_x_min)/4.0;
+	//x_center =m_search_reg_x_min +(m_search_reg_x_max-m_search_reg_x_min)/4.0;
+	y_center = m_search_reg_y_min +(m_search_reg_y_max-m_search_reg_y_min)*3.0/4.0;                                                                                                                         
+
       }
       else{ //other vehicle
-        x_center =m_search_reg_x_max -(m_search_reg_x_max-m_search_reg_x_min)/4.0;
+	//  x_center =m_search_reg_x_max -(m_search_reg_x_max-m_search_reg_x_min)/4.0;
+        y_center = m_search_reg_y_min +(m_search_reg_y_max-m_search_reg_y_min)/4.0;                                                                                                                         
       }
-      os << "points = format=lawnmower, label="<<m_vname<<"search, x=" <<x_center<<",y="<< y_center<<",height="<<sa_height<<",width="<<sa_width<<",lane_width="<<lane_width<<",rows=ns,startx="<<m_search_reg_x_min<<",starty="<<m_search_reg_y_max;
+      os << "points = format=lawnmower, label="<<m_vname<<"search, x=" <<x_center<<",y="<< y_center<<",height="<<sa_height<<",width="<<sa_width<<",lane_width="<<lane_width<<",rows=ew,startx="<<m_search_reg_x_min<<",starty="<<m_search_reg_y_max;
       string lawnmower_str = os.str();
       std::cout<<"lawnmower update: "<<lawnmower_str<<std::endl;
       Notify("LAWNMOWER_UPDATES", lawnmower_str);
