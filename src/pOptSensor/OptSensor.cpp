@@ -23,12 +23,12 @@ OptSensor::OptSensor()
 {
   m_current_Pd = 0.95;
   m_penalty_missed_hazard = 0.0;
-  m_penalty_nonopt_hazard = 0.0; //?
+  m_penalty_nonopt_hazard = 0.0; 
   m_penalty_false_alarm = 0.0;
   m_penalty_max_time_over = 0.0;
   m_max_time =0.0;
   m_penalty_max_time_rate = 0.0;
-  m_transit_path_width = 0.0; //?
+  m_transit_path_width = 0.0; 
   m_search_reg_x_min = 10000.0;
   m_search_reg_y_min = 10000.0;
   m_search_reg_x_max = -10000.0;
@@ -63,14 +63,12 @@ bool OptSensor::OnNewMail(MOOSMSG_LIST &NewMail)
     string key   = msg.GetKey();
     string sval  = msg.GetString();
    
-      //    std::cout<<"message: "<<key<<"value: "<<sval<<std::endl;
-   
     if (key == "UHZ_OPTIONS_SUMMARY"){
-      //      std::cout<<"options summary: "<<sval<<std::endl;
+      
       handleMailSensorOptionsSummary(sval);
     }
     if(key == "UHZ_MISSION_PARAMS"){
-      //std::cout<<"mission params: "<<sval<<std::endl;
+     
       handleMailMissionParams(sval);
 
     }
@@ -123,26 +121,28 @@ bool OptSensor::OnConnectToServer()
 
 bool OptSensor::Iterate()
 {
-  // std::cout<<"status: "<<m_name_received<<","<<m_search_config_received<<","<<m_update_lawnmower<<std::endl;
+  
   if (m_finished_search == "true"){
     //Update Pd
     ostringstream os_config;
-    os_config<<"vname="<<m_vname<<",pd="<<calcPd(m_current_Pd);
+    /* os_config<<"vname="<<m_vname<<",pd="<<calcPd(m_current_Pd);
+
     string uhz_config_request_str = os_config.str();
     Notify("UHZ_CONFIG_REQUEST",uhz_config_request_str);
-
+    No Longer changing Pd
+    */
     Notify("FINISHED_SEARCH","false");
     m_finished_search = "false";
   }
   if ((m_name_received==true)&&(m_search_config_received == true)&&(m_update_lawnmower ==false)){
     std::cout<<"********************* SENSOR WIDTH*****"<<std::endl;
-    //    msensor_width.push_back(temp_width);
+   
 
     std::cout<<m_sensor_width[0]<<", "<<m_sensor_width[1]<<","<<m_sensor_width[2]<<","<<m_sensor_width[3]<<std::endl;
-      //calcSearchTime(sensor_width,search_area_width,search_area_height);
+   
     int best_sensor_width_index;
-    //    double sa_height = (m_search_reg_y_max-m_search_reg_y_min)+m_height_buffer;
-    //double sa_width = (m_search_reg_x_max-m_search_reg_x_min)/2.0; //Areas are split between the two robots
+   
+   
     //top -bottom search
     double sa_height = ((m_search_reg_y_max-m_search_reg_y_min))/2.0;
     double sa_width = (m_search_reg_x_max-m_search_reg_x_min)+m_height_buffer; //Areas are split between the two robots    
@@ -160,7 +160,7 @@ bool OptSensor::Iterate()
     }  
     std::cout<<"updated lawnmower, best sensor width: "<< m_sensor_width[best_sensor_width_index]<<", exp: "<<m_sensor_exp[best_sensor_width_index]<<std::endl;
     std::cout<<" calculated optimal Pd: "<< calcOptPd(m_sensor_exp[best_sensor_width_index]) <<std::endl;
-      
+    double best_Pd = calcOptPd(m_sensor_exp[best_sensor_width_index]);
       ostringstream os;
       
       double lane_width = m_sensor_width[best_sensor_width_index]; //FACTOR OF TWO 
@@ -192,7 +192,7 @@ bool OptSensor::Iterate()
       // UHZ_CONFIG_REQUEST                   "vname=jake,width=50,pd=0.7"
       //TO DO : Add vname
       // Pd function , this is the first time so very large
-      os_config<<"vname="<<m_vname<<",width="<<m_sensor_width[best_sensor_width_index]<<",pd="<<m_current_Pd;
+      os_config<<"vname="<<m_vname<<",width="<<m_sensor_width[best_sensor_width_index]<<",pd="<<best_Pd;
       string uhz_config_request_str = os_config.str();
       Notify("UHZ_CONFIG_REQUEST",uhz_config_request_str);
 
@@ -410,16 +410,13 @@ double OptSensor::calcPd(double current_Pd){
 
 double OptSensor::calcOptPd(double exp){
   std::vector<double> v(100);
-  //  std::cout << "v: ";
   double k = 0.0;
   for (int i=0;i<v.size();i++) {
     v[i]=k;
     k = k+0.01;
-    //std::cout << v[i] << " ";
   }
   std::cout << "\n";
   double dist = 0.0;
-  //double exp = 20.0;
   double Pd,Pfa;
   double current_min = 1.0;
   double best_Pd, best_Pfa;
@@ -433,6 +430,6 @@ double OptSensor::calcOptPd(double exp){
       best_Pfa = Pfa;
     }
   }
-  //std::cout<<"exp: "<<exp<<", Pd: "<<best_Pd<<", Pfa: "<<best_Pfa<<std::endl;
+  
   return best_Pd;
 }
