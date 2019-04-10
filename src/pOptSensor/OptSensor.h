@@ -28,9 +28,11 @@ class OptSensor : public CMOOSApp
    void handleMailSensorOptionsSummary(std::string);
    void handleMailMissionParams(std::string);
    double calcSearchTime(double num_passes,double sensor_width,double search_area_width,double search_area_height);
-
+   double calcPd(double current_Pd);
 
  private: // Configuration variables
+   double m_current_Pd;
+   std::string m_finished_search;
    double m_penalty_missed_hazard;
    double m_penalty_nonopt_hazard; //?                                                                       
    double m_penalty_false_alarm;

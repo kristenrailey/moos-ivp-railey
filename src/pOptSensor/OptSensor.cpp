@@ -17,6 +17,7 @@ using namespace std;
 
 OptSensor::OptSensor()
 {
+  m_current_Pd = 0.95;
   m_penalty_missed_hazard = 0.0;
   m_penalty_nonopt_hazard = 0.0; //?
   m_penalty_false_alarm = 0.0;
@@ -32,7 +33,7 @@ OptSensor::OptSensor()
   m_update_lawnmower = false;
   m_sensor_options_received = false;
   m_name_received = false;
-  
+  m_finished_search = "false";
   m_num_passes =3.0;
   
   m_time_buffer=1000.0;
@@ -78,6 +79,11 @@ bool OptSensor::OnNewMail(MOOSMSG_LIST &NewMail)
       m_name_received = true;
       
     }
+
+    if (key == "FINISHED_SEARCH"){
+      m_finished_search = sval;
+
+    }
 #if 0 // Keep these around just for template
     string key   = msg.GetKey();
     string comm  = msg.GetCommunity();
@@ -114,6 +120,16 @@ bool OptSensor::OnConnectToServer()
 bool OptSensor::Iterate()
 {
   // std::cout<<"status: "<<m_name_received<<","<<m_search_config_received<<","<<m_update_lawnmower<<std::endl;
+  if (m_finished_search == "true"){
+    //Update Pd
+    ostringstream os_config;
+    os_config<<"vname="<<m_vname<<",pd="<<calcPd(m_current_Pd);
+    string uhz_config_request_str = os_config.str();
+    Notify("UHZ_CONFIG_REQUEST",uhz_config_request_str);
+
+    Notify("FINISHED_SEARCH","false");
+    m_finished_search = "false";
+  }
   if ((m_name_received==true)&&(m_search_config_received == true)&&(m_update_lawnmower ==false)){
     std::cout<<"********************* SENSOR WIDTH*****"<<std::endl;
     //    msensor_width.push_back(temp_width);
@@ -159,7 +175,7 @@ bool OptSensor::Iterate()
       // UHZ_CONFIG_REQUEST                   "vname=jake,width=50,pd=0.7"
       //TO DO : Add vname
       // Pd function , this is the first time so very large
-      os_config<<"vname="<<m_vname<<",width="<<m_sensor_width[best_sensor_width_index]<<",pd=0.9";
+      os_config<<"vname="<<m_vname<<",width="<<m_sensor_width[best_sensor_width_index]<<",pd="<<m_current_Pd;
       string uhz_config_request_str = os_config.str();
       Notify("UHZ_CONFIG_REQUEST",uhz_config_request_str);
 
@@ -206,7 +222,7 @@ void OptSensor::RegisterVariables()
   Register("UHZ_MISSION_PARAMS",0);
   Register("UHZ_OPTIONS_SUMMARY",0);
   Register("PHI_HOST_INFO",0);
-  
+  Register("FINISHED_SEARCH",0);
 }
 
 //---------------------------------------------------------                                      
@@ -357,4 +373,10 @@ double OptSensor::calcSearchTime(double num_passes, double sensor_width,double s
   double total_dist = (search_area_height*(num_lanes+1)+search_area_width)*num_passes;
     std::cout<<"lane width: "<<lane_width<<"num of lanes: "<<num_lanes<<"total dist: "<<total_dist<<std::endl;
     return ((total_dist/2.0)+m_time_buffer);
+}
+
+
+double OptSensor::calcPd(double current_Pd){
+  return current_Pd-.1; //Non optimized for now
+
 }
