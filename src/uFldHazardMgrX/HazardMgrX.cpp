@@ -21,14 +21,29 @@
 /* <http://www.gnu.org/licenses/>.                               */
 /*****************************************************************/
 
+#include <cmath>
+#include <cstdint>
+#include <iostream>
 #include <iterator>
+#include <list>
+#include <map>
+#include <set>
+#include <string>
+
+
+#include <math.h>
+#include <random>
+
 #include "MBUtils.h"
+#include "NodeMessage.h"
 #include "HazardMgrX.h"
+#include "HazardSearch.h"
 #include "XYFormatUtilsHazard.h"
 #include "XYFormatUtilsPoly.h"
 #include "ACTable.h"
 
 using namespace std;
+
 
 //---------------------------------------------------------
 // Constructor
@@ -44,14 +59,21 @@ HazardMgrX::HazardMgrX()
   m_sensor_config_set   = false;
   m_swath_width_granted = 0;
   m_pd_granted          = 0;
+  m_pfa_granted         = 0;
+  m_pc_granted          = 0;
 
   m_sensor_config_reqs = 0;
   m_sensor_config_acks = 0;
   m_sensor_report_reqs = 0;
   m_detection_reports  = 0;
 
-  m_summary_reports = 0;
+  m_summary_reports    = 0;
+
+  // number of times an obstacle is passed over
+  // TODO make new variable posting when next lawnmower begins 
+  m_num_passes         = 0;
 }
+
 
 //---------------------------------------------------------
 // Procedure: OnNewMail
@@ -65,15 +87,6 @@ bool HazardMgrX::OnNewMail(MOOSMSG_LIST &NewMail)
     CMOOSMsg &msg = *p;
     string key   = msg.GetKey();
     string sval  = msg.GetString(); 
-
-#if 0 // Keep these around just for template
-    string comm  = msg.GetCommunity();
-    double dval  = msg.GetDouble();
-    string msrc  = msg.GetSource();
-    double mtime = msg.GetTime();
-    bool   mdbl  = msg.IsDouble();
-    bool   mstr  = msg.IsString();
-#endif
     
     if(key == "UHZ_CONFIG_ACK") 
       handleMailSensorConfigAck(sval);
@@ -84,11 +97,19 @@ bool HazardMgrX::OnNewMail(MOOSMSG_LIST &NewMail)
     else if(key == "UHZ_DETECTION_REPORT") 
       handleMailDetectionReport(sval);
 
+    else if(key == "UHZ_HAZARD_REPORT") 
+      handleMailHazardReport(sval);
+
     else if(key == "HAZARDSET_REQUEST") 
       handleMailReportRequest();
 
     else if(key == "UHZ_MISSION_PARAMS") 
       handleMailMissionParams(sval);
+
+    else if(key == "FINISHED_SEARCH") {
+      if (sval == "true") 
+        m_num_passes++;
+    }
 
     else 
       reportRunWarning("Unhandled Mail: " + key);
@@ -96,6 +117,7 @@ bool HazardMgrX::OnNewMail(MOOSMSG_LIST &NewMail)
 	
    return(true);
 }
+
 
 //---------------------------------------------------------
 // Procedure: OnConnectToServer
@@ -105,6 +127,7 @@ bool HazardMgrX::OnConnectToServer()
    registerVariables();
    return(true);
 }
+
 
 //---------------------------------------------------------
 // Procedure: Iterate()
@@ -120,9 +143,19 @@ bool HazardMgrX::Iterate()
   if(m_sensor_config_set)
     postSensorInfoRequest();
 
+  if(m_node_message_queue.size()>0) {
+    NodeMessage msg;
+    msg.setSourceNode(m_host_community);
+    msg.setDestNode("all");
+    msg.setVarName("HAZARD_SEARCH_UP");
+    msg.setStringVal(m_hazard_search.GetHazardNodeMessage(m_node_message_queue.front()));
+    Notify("NODE_MESSAGE_LOCAL", msg.getSpec());
+  }
+
   AppCastingMOOSApp::PostReport();
   return(true);
 }
+
 
 //---------------------------------------------------------
 // Procedure: OnStartUp()
@@ -177,6 +210,7 @@ bool HazardMgrX::OnStartUp()
   return(true);
 }
 
+
 //---------------------------------------------------------
 // Procedure: registerVariables
 
@@ -184,11 +218,14 @@ void HazardMgrX::registerVariables()
 {
   AppCastingMOOSApp::RegisterVariables();
   Register("UHZ_DETECTION_REPORT", 0);
+  Register("UHZ_HAZARD_REPORT", 0);
   Register("UHZ_CONFIG_ACK", 0);
   Register("UHZ_OPTIONS_SUMMARY", 0);
   Register("UHZ_MISSION_PARAMS", 0);
   Register("HAZARDSET_REQUEST", 0);
+  Register("FINISHED_SEARCH", 0);
 }
+
 
 //---------------------------------------------------------
 // Procedure: postSensorConfigRequest
@@ -202,8 +239,8 @@ void HazardMgrX::postSensorConfigRequest()
 
   m_sensor_config_requested = true;
   m_sensor_config_reqs++;
-  // Commented out by KR 4/9/19 3:58 pm.  Notify("UHZ_CONFIG_REQUEST", request);
 }
+
 
 //---------------------------------------------------------
 // Procedure: postSensorInfoRequest
@@ -215,6 +252,7 @@ void HazardMgrX::postSensorInfoRequest()
   m_sensor_report_reqs++;
   Notify("UHZ_SENSOR_REQUEST", request);
 }
+
 
 //---------------------------------------------------------
 // Procedure: handleMailSensorConfigAck
@@ -246,9 +284,7 @@ bool HazardMgrX::handleMailSensorConfigAck(string str)
       pclass = value;
     else
       valid_msg = false;       
-
   }
-
 
   if((vname=="")||(width=="")||(pd=="")||(pfa=="")||(pclass==""))
     valid_msg = false;
@@ -261,11 +297,15 @@ bool HazardMgrX::handleMailSensorConfigAck(string str)
     m_sensor_config_set = true;
     m_sensor_config_acks++;
     m_swath_width_granted = atof(width.c_str());
-    m_pd_granted = atof(pd.c_str());
+    m_config_id   = "pd=" + pd + ",pfa=" + pfa + ",pc=" + pclass;
+    m_pd_granted  = atof(pd.c_str());
+    m_pfa_granted = atof(pfa.c_str());
+    m_pc_granted  = atof(pclass.c_str());
   }
 
   return(valid_msg);
 }
+
 
 //---------------------------------------------------------
 // Procedure: handleMailDetectionReport
@@ -278,7 +318,6 @@ bool HazardMgrX::handleMailDetectionReport(string str)
 
   XYHazard new_hazard = string2Hazard(str);
   new_hazard.setType("hazard");
-
   string hazlabel = new_hazard.getLabel();
   
   if(hazlabel == "") {
@@ -286,21 +325,80 @@ bool HazardMgrX::handleMailDetectionReport(string str)
     return(false);
   }
 
-  int ix = m_hazard_set.findHazard(hazlabel);
-  if(ix == -1)
-    m_hazard_set.addHazard(new_hazard);
-  else
-    m_hazard_set.setHazard(ix, new_hazard);
-
-  string event = "New Detection, label=" + new_hazard.getLabel();
-  event += ", x=" + doubleToString(new_hazard.getX(),1);
-  event += ", y=" + doubleToString(new_hazard.getY(),1);
-
+  string event = "New Det, label=" + hazlabel;
   reportEvent(event);
 
+  // TODO add to queue of items to continually request (add hazard itself to queue)
   string req = "vname=" + m_host_community + ",label=" + hazlabel;
-
   Notify("UHZ_CLASSIFY_REQUEST", req);
+
+  m_hazard_search_set.insert(str);
+  m_simple_hazard_set.insert(hazlabel);
+  string vname     = m_host_community;
+  string search_id = m_hazard_search.GetHazardSearchID(str, vname, m_config_id);
+
+  // add detection for this hazard 
+  if (m_hazard_search.m_simple_detect_map.count(hazlabel) > 0){
+    m_hazard_search.m_simple_detect_map[hazlabel]++;
+  }
+  else {
+    m_hazard_search.m_simple_detect_map[hazlabel]=1;
+  }
+
+  // check if node message is already on the queue
+  // TODO change this to just sharing the final decision with other vehicle 
+  // TODO take the set union between vehicles regarding what to send in the hazard request 
+  m_node_message_queue.push_back(search_id);
+
+  return(true);
+}
+
+
+//---------------------------------------------------------
+// Procedure: handleMailHazardReport
+//      Note: The hazard report should look something like:
+//            UHZ_HAZARD_REPORT = vname=archie,x=51,y=11.3,hazard=true,label=12 
+
+bool HazardMgrX::handleMailHazardReport(string str)
+{
+  m_detection_reports++;
+
+  XYHazard new_hazard = string2Hazard(str);
+  string   hazlabel = new_hazard.getLabel();
+  string   haztype  = new_hazard.getType();
+  
+  if(hazlabel == "") {
+    reportRunWarning("Hazard report received for hazard w/out label");
+    return(false);
+  }
+
+  string event = "New Haz, label=" + hazlabel;
+  event += ", type=" + haztype;
+  reportEvent(event);
+
+  string vname     = m_host_community;
+  string search_id = m_hazard_search.GetHazardSearchID(str, vname, m_config_id);
+
+  // add classification request for this hazard
+  if (m_hazard_search.m_simple_request_map.count(hazlabel) > 0) {
+    m_hazard_search.m_simple_request_map[hazlabel]++;
+  }
+  else {
+    m_hazard_search.m_simple_request_map[hazlabel]=1;
+  }
+
+  // add classification for type hazard
+  if (haztype == "hazard"){
+    if (m_hazard_search.m_simple_classify_map.count(hazlabel) > 0) {
+      m_hazard_search.m_simple_classify_map[hazlabel]++;
+    }
+    else {
+      m_hazard_search.m_simple_classify_map[hazlabel]=1;
+    }
+  }
+
+  // TODO check if node message is already on the queue
+  m_node_message_queue.push_back(search_id);
 
   return(true);
 }
@@ -331,7 +429,6 @@ void HazardMgrX::handleMailReportRequest()
 //                       transit_path_width=25,                           
 //                       search_region = pts={-150,-75:-150,-50:40,-50:40,-75}
 
-
 void HazardMgrX::handleMailMissionParams(string str)
 {
   vector<string> svector = parseStringZ(str, ',', "{");
@@ -339,7 +436,6 @@ void HazardMgrX::handleMailMissionParams(string str)
   for(i=0; i<vsize; i++) {
     string param = biteStringX(svector[i], '=');
     string value = svector[i];
-    // This needs to be handled by the developer. Just a placeholder.
   }
 }
 
@@ -349,31 +445,204 @@ void HazardMgrX::handleMailMissionParams(string str)
 
 bool HazardMgrX::buildReport() 
 {
+  m_msgs << "============================================" << endl;
+  m_msgs << "File: HazardMgrX." << m_host_community << " " << endl;
+  m_msgs << "============================================" << endl;
+  m_msgs << endl;
+
+  // set up a table that summarizes the results of the hazard search
+  //  + 'HazID' is the label of the hazard
+  //  + 'NumPass' is the estimated possible number of detections (# lawnmowers)
+  //  + 'ActDet' is the actual number of detections received
+  //  + 'ClassReq' is the number of classification requests
+  //  + 'ClassHaz' is the number of times the obstacle is classified as a hazard
+  m_msgs << "--------------------------------------------"       << endl;
+  m_msgs << "Detection/Classification Summary:"                  << endl;
+  ACTable actab(7);
+  string vname = m_host_community; 
+  actab << "HazID | # | NumPass | ActDet | ClassReq | ClassHaz | # ";
+  actab.addHeaderLines();
+
+  // add a new line to the table for each element seen
+  set<string>::iterator it = m_simple_hazard_set.begin();
+  while (it != m_simple_hazard_set.end())
+  { 
+    // assemble strings to use in the AppCast table
+    string act_det, class_req, class_haz;
+
+    // extract the detection count
+    if (m_hazard_search.m_simple_detect_map.count(*it) > 0) {
+      act_det = to_string(m_hazard_search.m_simple_detect_map[*it]);
+    }
+    else {
+      act_det = to_string(0);
+    }
+
+    // extract the classification request count
+    if (m_hazard_search.m_simple_request_map.count(*it) > 0)
+      class_req = to_string(m_hazard_search.m_simple_request_map[*it]);
+    else 
+      class_req = to_string(0);
+
+    // get the hazard classification count 
+    if (m_hazard_search.m_simple_classify_map.count(*it) > 0)
+      class_haz = to_string(m_hazard_search.m_simple_classify_map[*it]);
+    else 
+      class_haz = to_string(0);
+
+    // print out all the count information in a nice table format
+    actab << *it 
+          << "#"
+          << to_string(m_num_passes)
+          << act_det
+          << class_req
+          << class_haz
+          << "#";
+    it++;
+  }
+  m_msgs << actab.getFormattedString();
+
+  m_msgs << endl << endl;
+  m_msgs << "--------------------------------------------"       << endl;
   m_msgs << "Config Requested:"                                  << endl;
   m_msgs << "    swath_width_desired: " << m_swath_width_desired << endl;
   m_msgs << "             pd_desired: " << m_pd_desired          << endl;
   m_msgs << "   config requests sent: " << m_sensor_config_reqs  << endl;
   m_msgs << "                  acked: " << m_sensor_config_acks  << endl;
-  m_msgs << "------------------------ "                          << endl;
+  m_msgs << "--------------------------------------------"       << endl;
   m_msgs << "Config Result:"                                     << endl;
   m_msgs << "       config confirmed: " << boolToString(m_sensor_config_set) << endl;
   m_msgs << "    swath_width_granted: " << m_swath_width_granted << endl;
-  m_msgs << "             pd_granted: " << m_pd_granted          << endl << endl;
-  m_msgs << "--------------------------------------------" << endl << endl;
-
-  m_msgs << "               sensor requests: " << m_sensor_report_reqs << endl;
-  m_msgs << "             detection reports: " << m_detection_reports  << endl << endl; 
-
-  m_msgs << "   Hazardset Reports Requested: " << m_summary_reports << endl;
-  m_msgs << "      Hazardset Reports Posted: " << m_summary_reports << endl;
-  m_msgs << "                   Report Name: " << m_report_name << endl;
+  m_msgs << "             pd_granted: " << m_pd_granted          << endl;
+  m_msgs << "            pfa_granted: " << m_pfa_granted         << endl;
+  m_msgs << "             pc_granted: " << m_pc_granted          << endl;
+  m_msgs << "--------------------------------------------"       << endl;
+  m_msgs << "Sensor Result:"                                     << endl;
+  m_msgs << "        sensor requests: " << m_sensor_report_reqs  << endl;
+  m_msgs << "      detection reports: " << m_detection_reports   << endl; 
+  m_msgs << "  Hazardset Reports Req: " << m_summary_reports     << endl;
+  m_msgs << " Hazardset Reports Post: " << m_summary_reports     << endl;
+  m_msgs << "            Report Name: " << m_report_name         << endl;
 
   return(true);
 }
 
 
+//--------------------------------------------------------------
+bool HazardMgrX::calcHazardBelief(std::string label){
+
+  //std::string label = "25";
+  //Access map                                                                                                                                                                                                     
+  int num_detections=m_hazard_search.m_simple_detect_map[label]; // = m_simple_map[label]                                                                                                                                                                   
+  int num_lawnmowers=m_num_passes;
+  int num_hazards = m_hazard_search.m_simple_classify_map[label];
+  int num_requests=m_hazard_search.m_simple_request_map[label];
+  //Given                                                                                                                                                                                                          
+  double Pd = m_pd_granted;
+  double Pf = m_pfa_granted;
+  double Pc = m_pc_granted;
+  //double penalty_miss = 50; //Normalized                                                                                                                                                                           
+  //double penalty_fa = 50;
+  //Detections-----                                                                                                                                                                                                
+  // Assuming two passes                                                                                                                                                                                           
+  //Given hazard:                                                                                                                                                                                                  
+  double prob_dd_given_H = pow(Pd,2);
+  double prob_dn_given_H = Pd*(1-Pd);
+  double prob_nd_given_H = Pd*(1-Pd);
+  double prob_nn_given_H = pow((1-Pd),2);
+  //Given benign:                                                                                                                                                                                                  
+  double prob_dd_given_B = pow(Pf,2);
+  double prob_dn_given_B = Pf*(1-Pf);
+  double prob_nd_given_B = Pf*(1-Pf);
+  double prob_nn_given_B = pow((1-Pf),2);
+  std::cout<<"Results: "<<prob_dd_given_H<<","<<prob_nd_given_H<<","<<prob_nn_given_H<<std::endl;
+  std::cout<<"Results: "<<prob_dd_given_B<<","<<prob_nd_given_B<<","<<prob_nn_given_B<<std::endl;
+
+  //double ratio_penalty = penalty_miss/(penalty_fa);                                                                                                                                                              
+  double decision_ratio_detection;
+  bool decision_detection;
+  //Cases for detection:                                                                                                                                                                                           
+  if (num_detections >= num_lawnmowers){
+    decision_ratio_detection = prob_dd_given_H;
+  }
+  else if (num_detections == 1){
+    decision_ratio_detection = (prob_nd_given_H)*2.0;
+  }
+  else{
+    //Zero detections                                                                                                                                                                                              
+  }
+
+  if (decision_ratio_detection>0.3){
+    decision_detection = true;
+  }
+  else{
+    decision_detection = false;
+  } //COMMENT HERE                                                                                                                                                                                                
+
+  //std::cout<<"ratio penalty: "<<ratio_penalty<<", decision ratio: "<<decision_ratio_detection<<", decision: "<<decision_detection<<std::endl;                                                                    
+  //Classifications----------                                                                                                                                                                                      
+  bool decision_classification;
+  //Add check if n>20, then binom will fail                                                                                                                                                                        
+  if (num_requests>20){
+    std::cout<<"greater than 20, ratio: "<<(double)num_hazards/(double)num_requests<<std::endl;
+    if ((double)num_hazards/(double)num_requests>0.3){
+      decision_classification = true;
+    }
+    else{
+      decision_classification = false;
+    }
+  }
+  else if (num_requests<20){
+
+    double prob_hazards_in_requests = binom_distribution(Pc, num_hazards, num_requests);
+    std::cout<<"prob of hazards in requests: "<<prob_hazards_in_requests<<std::endl;
+    double decision_ratio_classification = prob_hazards_in_requests/(1-prob_hazards_in_requests); //normalized                                                                                                     
+    std::cout<<"decision ratio classification: "<<decision_ratio_classification<<std::endl;
+    if (decision_ratio_classification>0.3){ //try normalizing                                                                                                                                                      
+      decision_classification = true;
+    }
+    else{
+      decision_classification = false;
+    }
+  }
+  bool decision_final;
+  std::cout<<"Decision: "<<decision_detection<<", "<<decision_classification<<std::endl;
+  if (num_requests>2){
+    decision_final = decision_classification;
+  }
+  else{
+    decision_final = decision_detection;
+  }
+  std::cout<<"final decision: "<<decision_final<<std::endl;
+  return decision_final;
+}
 
 
+
+
+
+
+}
+
+
+
+//------------------------------------------------------------------
+
+// This will fail if n>20                                                                                                                                                                                          
+unsigned long long int HazardMgrX::factorial(long int n){
+
+  unsigned long long int result=1;
+  for (long int i=0; i<n;i++){
+    result=result*(n-i);
+  }
+  return result;
+}
+
+double HazardMgrX::binom_distribution(double p,int k,int n){
+  double binom_coeff = factorial(n)/(factorial(k)*factorial(n-k));
+  double result = binom_coeff*(pow(p,k))*(pow((1-p),(n-k)));
+  return result;
+}
 
 
 

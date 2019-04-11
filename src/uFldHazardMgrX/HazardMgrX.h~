@@ -71,7 +71,7 @@ class HazardMgrX : public AppCastingMOOSApp
    void postHazardSetReport();
 
  protected:
-   bool calcHazardBelief(std::string label);
+   bool calcHazardBelief(string label);
    unsigned long long int factorial(long int n);
    double binom_distribution(double p,int k,int n);
 
