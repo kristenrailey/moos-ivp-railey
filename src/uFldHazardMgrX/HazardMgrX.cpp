@@ -552,7 +552,7 @@ bool HazardMgrX::calcHazardBelief(std::string label){
   double prob_nn_given_H = pow((1-Pd),2);
   //Given benign:                                                                                                                                                                                                  
   double prob_dd_given_B = pow(Pf,2);
-  double prob_dn_given_B = Pf*(1-Pf);
+  //(Not used)  double prob_dn_given_B = Pf*(1-Pf);
   double prob_nd_given_B = Pf*(1-Pf);
   double prob_nn_given_B = pow((1-Pf),2);
   std::cout<<"Results: "<<prob_dd_given_H<<","<<prob_nd_given_H<<","<<prob_nn_given_H<<std::endl;
@@ -592,7 +592,7 @@ bool HazardMgrX::calcHazardBelief(std::string label){
       decision_classification = false;
     }
   }
-  else if (num_requests<20){
+  if (num_requests<20){
 
     double prob_hazards_in_requests = binom_distribution(Pc, num_hazards, num_requests);
     std::cout<<"prob of hazards in requests: "<<prob_hazards_in_requests<<std::endl;
@@ -622,7 +622,7 @@ bool HazardMgrX::calcHazardBelief(std::string label){
 
 
 
-}
+
 
 
 
