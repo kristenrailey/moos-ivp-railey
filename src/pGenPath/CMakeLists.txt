@@ -1,6 +1,6 @@
 #--------------------------------------------------------
 # The CMakeLists.txt for:                       pGenPath
-# Author(s):                              Kristen Railey
+# Author(s):                              
 #--------------------------------------------------------
 
 SET(SRC
@@ -14,7 +14,8 @@ ADD_EXECUTABLE(pGenPath ${SRC})
 TARGET_LINK_LIBRARIES(pGenPath
    ${MOOS_LIBRARIES}
    geometry
-   mbutil
    apputil
+   mbutil
    m
    pthread)
+

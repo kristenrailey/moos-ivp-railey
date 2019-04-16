@@ -1,5 +1,5 @@
 /****************************************************************/
-/*   NAME: Kristen Railey                                             */
+/*   NAME:                                              */
 /*   ORGN: MIT Cambridge MA                                     */
 /*   FILE: GenPath_Info.cpp                               */
 /*   DATE: Dec 29th 1963                                        */
