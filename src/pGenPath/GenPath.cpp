@@ -34,6 +34,7 @@ GenPath::GenPath()
   m_old_y=0.0;
   m_first_nav_x=true;
   m_first_nav_y=true;
+  m_first_node_report = true;
   m_collect_nav=false;
   m_visit_radius = 0.0;
 }
@@ -57,7 +58,7 @@ bool GenPath::OnNewMail(MOOSMSG_LIST &NewMail)
     CMOOSMsg &msg = *p;
     string key    = msg.GetKey();
     string sval  = msg.GetString();
-    double dval = msg.GetDouble();
+    //    double dval = msg.GetDouble();
 
 #if 0 // Keep these around just for template
     string comm  = msg.GetCommunity();
@@ -72,17 +73,21 @@ bool GenPath::OnNewMail(MOOSMSG_LIST &NewMail)
       handleMailVisitPoint(sval);
     }
 
-    if (key == "NAV_X"){
+    /* if (key == "NAV_X"){
       handleMailNavX(dval);
     }
     if (key == "NAV_Y"){
       handleMailNavY(dval);
-    }
+      }*/
 
     if (key == "WPT_STAT"){
       handleMailWayPointStat(sval);
     }
    
+    if (key == "NODE_REPORT_LOCAL"){
+      std::cout<<"node report local"<<std::endl;
+      handleMailNodeReportLocal(sval);
+    }
     if (key=="GENPATH_REGENERATE"){
 
       handleMailRegenerate(sval);
@@ -295,8 +300,6 @@ bool GenPath::Iterate()
   //std::cout<<"mpoints ordered size: "<<m_points_ordered.size()<<std::endl;                 
   for (std::vector<std::string>::iterator k = m_points_ordered.begin(); k != m_points_ordered.end(); ++k){
     double current_min = 1000.0;
-
-
     if (m_first_dist_to_point == 0){
       m_dist_to_point.push_back(current_min);
     }
@@ -317,30 +320,28 @@ bool GenPath::Iterate()
     //  std::cout<<"size: "<<m_nav_x.size()<<", "<<m_nav_y.size()<<std::endl;                
 
 
-    int x_index_temp =0;
-    int y_index_temp = 0;
-  for (std::vector<double>::iterator xx = m_nav_x.begin(); xx!=m_nav_x.end();++xx){ 
-    for (std::vector<double>::iterator yy = m_nav_y.begin(); yy!=m_nav_y.end();++yy){
-      //double temp_dist=sqrt(pow((x_double-*xx),2)+pow((y_double-*yy),2));
-    //              std::cout<<"temp dist: "<<temp_dist<<std::endl;                      
-      double temp_dist=pow((pow((x_double-*xx),2)+pow((y_double-*yy),2)),0.5);
-
-      if ((temp_dist<current_min)&&(abs(x_index_temp-y_index_temp)<3)){  // Check if less than current min, update. X,y should be pairs (indices should be close) 
-	std::cout<<"index: "<<index_int<<"x,y: "<<x_double<<", "<<y_double<<", new min: "<<*xx<<", "<<*yy<<"dist: "<<current_min<<std::endl;                                                                                     
+    
+    
+    //for (std::vector<double>::iterator xx = m_nav_x.begin(); xx!=m_nav_x.end();++xx){ 
+    for (int node_index_temp = 0;node_index_temp<m_nav_x.size();node_index_temp++){  
+      double temp_dist=pow((pow((x_double-m_nav_x[node_index_temp]),2)+pow((y_double-m_nav_y[node_index_temp]),2)),0.5);
+      if (temp_dist<current_min){  // Check if less than current min, update. X,y should be pairs (indices should be close) 
+	std::cout<<"index: "<<index_int<<"x,y: "<<x_double<<", "<<y_double<<", new min: "<<m_nav_x[node_index_temp]<<", "<<m_nav_x[node_index_temp]<<"dist: "<<current_min<<std::endl;                                     
 	current_min=temp_dist;
-      }
-      y_index_temp++;
-    }
-    x_index_temp++;
-  }
+	}
+    }	
     m_dist_to_point[index_int] = current_min; //Update to current min                        
-    //  std::cout<<"current miN: "<<current_min<<std::endl;                                  
-    //  std::cout<<"size of m dist to point: "<<m_dist_to_point.size()<<std::endl;           
-    index_int++;                                                                            
-  }                                                                                         
+    std::cout<<"size: "<<m_dist_to_point.size()<<", indexing: "<<index_int<<std::endl;
+    //m_first_dist_to_point = 1;
+	
+    index_int++;
+  }	
+      
+                                                                                        
+ 
   m_first_dist_to_point = 1;
 
-
+    
   AppCastingMOOSApp::PostReport();
   return(true);
 }
@@ -403,8 +404,9 @@ void GenPath::registerVariables()
   AppCastingMOOSApp::RegisterVariables();
   // Register("FOOBAR", 0);
   Register("VISIT_POINT",0);
-  Register("NAV_X",0);
-  Register("NAV_Y",0);
+  Register("NODE_REPORT_LOCAL",0);
+  //Register("NAV_X",0);
+  //Register("NAV_Y",0);
   Register("WPT_STAT",0);
   Register("WPT_INDEX",0);
   Register("GENPATH_REGENERATE",0);
@@ -456,6 +458,36 @@ void GenPath::handleMailVisitPoint(std::string sval){
   }
   
 }
+
+void GenPath::handleMailNodeReportLocal(std::string sval){
+  //NODE_REPORT_LOCAL                          "NAME=henry,X=194.2,Y=-78.66,SPD=0,HDG=347.95,DEP=0,LAT=43.82462007,LON=-70.32796983,TYPE=KAYAK,MODE=MODE@ACTIVE:SEARCHING,ALLSTOP=NothingToDo,INDEX=2284,YAW=1.781046,TIME=15554455149.93,LENGTH=4"
+
+  std::string x_str = tokStringParse(sval,"X",',','=');
+  std::string y_str = tokStringParse(sval,"Y",',','=');
+  double x_double = 0.0;
+  double y_double = 0.0;
+  stringstream rr;
+  stringstream ww;
+  rr<<x_str;
+  ww<<y_str;
+  rr>>x_double;
+  ww>>y_double;
+  
+  if (m_first_node_report){
+    m_old_x = x_double;
+    m_old_y = y_double;
+    m_first_node_report = false;
+  }
+  //bool new_node = ((abs(x_double-m_old_x)>1.0)||(abs(y_double-m_old_y)>1.0));
+  else if ((m_collect_nav==true)&&(m_first_node_report==false)&&( ((abs(x_double-m_old_x)>1.0)||(abs(y_double-m_old_y)>1.0)) )){
+      m_nav_x.push_back(x_double);
+      m_old_x=x_double;
+      m_nav_y.push_back(y_double);
+      m_old_y=y_double;
+  }
+}
+   
+
 
 
 void GenPath::handleMailNavX(double dval){
