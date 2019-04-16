@@ -317,17 +317,22 @@ bool GenPath::Iterate()
     //  std::cout<<"size: "<<m_nav_x.size()<<", "<<m_nav_y.size()<<std::endl;                
 
 
-
+    int x_index_temp =0;
+    int y_index_temp = 0;
   for (std::vector<double>::iterator xx = m_nav_x.begin(); xx!=m_nav_x.end();++xx){ 
     for (std::vector<double>::iterator yy = m_nav_y.begin(); yy!=m_nav_y.end();++yy){
-      double temp_dist=sqrt(pow((x_double-*xx),2)+pow((y_double-*yy),2));
+      //double temp_dist=sqrt(pow((x_double-*xx),2)+pow((y_double-*yy),2));
     //              std::cout<<"temp dist: "<<temp_dist<<std::endl;                      
-      if (temp_dist<current_min){  // Check if less than current min, update 
-                                                                                             
-      current_min=temp_dist;
+      double temp_dist=pow((pow((x_double-*xx),2)+pow((y_double-*yy),2)),0.5);
+
+      if ((temp_dist<current_min)&&(abs(x_index_temp-y_index_temp)<3)){  // Check if less than current min, update. X,y should be pairs (indices should be close) 
+	std::cout<<"index: "<<index_int<<"x,y: "<<x_double<<", "<<y_double<<", new min: "<<*xx<<", "<<*yy<<"dist: "<<current_min<<std::endl;                                                                                     
+	current_min=temp_dist;
+      }
+      y_index_temp++;
     }
+    x_index_temp++;
   }
-    }
     m_dist_to_point[index_int] = current_min; //Update to current min                        
     //  std::cout<<"current miN: "<<current_min<<std::endl;                                  
     //  std::cout<<"size of m dist to point: "<<m_dist_to_point.size()<<std::endl;           
@@ -416,10 +421,13 @@ bool GenPath::buildReport()
   m_msgs << "============================================"<< endl;
   m_msgs << "File:                                       " << endl;
   m_msgs << "============================================" << endl;
+  m_msgs << "Size of ordered points: "<<m_points_ordered.size()<<", distance to  points size: "<<m_dist_to_point.size()<<std::endl;
+  m_msgs << "size of nav x : "<<m_nav_x.size()<<", nav y: "<<m_nav_y.size()<<std::endl;
   m_msgs << "Vist radius minimum: "<<m_visit_radius<<std::endl;
   m_msgs << "Finished search: "<<m_finished_search<<std::endl;
   m_msgs << "Regenerate: "<<m_regenerate<<std::endl;
   m_msgs << "Status: "<<m_finished_status<<std::endl;
+
   ACTable actab(2);
   actab << "Visit Point# | Distances";
   actab.addHeaderLines();
