@@ -168,5 +168,5 @@ void Odometry::RegisterVariables()
 bool Odometry::buildReport()
 {
   m_msgs<<"Distance Travelled: "<<m_total_distance<<std::endl;
-
+  return (true); //Added this for build
 }
