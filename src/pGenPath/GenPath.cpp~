@@ -131,7 +131,7 @@ bool GenPath::Iterate()
       if (m_finished_search ==true){ //added this
 	findRevisitPoints();
       }
-      std::cout<<"size of revisit points: "<<m_revisit_points.size()<<", finished search: "<<m_finished_search<<std::endl;
+      //std::cout<<"size of revisit points: "<<m_revisit_points.size()<<", finished search: "<<m_finished_search<<std::endl;
       if ((m_revisit_points.size()==0)&&(m_finished_search==true)){ //DONE                   
         Notify("RETURN","true");
         Notify("SEARCH","false");
@@ -186,14 +186,14 @@ bool GenPath::Iterate()
       Notify("FIRST_TIME","true");
       Notify("TRANSIT_UPDATES_FIRST_TIME",updates_str);
       Notify("SEARCH","true");
-      std::cout<<"sent notifications"<<std::endl;
+      //std::cout<<"sent notifications"<<std::endl;
       m_all_points_posted = true;
       UnRegister("VISIT_POINT");
       m_first_dist_to_point = 0;
       m_first_time = false; //Next time will be revisit points                               
     }
     else if (m_regenerate==true){
-      std::cout<<"update missed points, regen: "<<updates_str<<std::endl;
+      //std::cout<<"update missed points, regen: "<<updates_str<<std::endl;
       Notify("TRANSIT_UPDATES_MISSED_POINTS",updates_str);
       Notify("MISSED_POINTS","true");
       m_first_dist_to_point = 0; // added this
@@ -214,7 +214,7 @@ bool GenPath::Iterate()
   
   for (std::vector<std::string>::iterator k = m_points_ordered.begin(); k != m_points_ordered.end(); ++k){
     double current_min = 1000.0;
-    std::cout<< "m first dist to point: "<< m_first_dist_to_point<<std::endl;
+    //std::cout<< "m first dist to point: "<< m_first_dist_to_point<<std::endl;
     if (m_first_dist_to_point == 0){
       m_dist_to_point.push_back(current_min);
     }
@@ -239,7 +239,7 @@ bool GenPath::Iterate()
 	current_min=temp_dist;
 	}
     }	
-    std::cout<<" m idst to point size: "<< m_dist_to_point.size() << ", index int: " << index_int <<" min: "<<current_min << std::endl;
+    //std::cout<<" m idst to point size: "<< m_dist_to_point.size() << ", index int: " << index_int <<" min: "<<current_min << std::endl;
     m_dist_to_point[index_int] = current_min; //Update to current min                        
     
     index_int++;
@@ -273,7 +273,7 @@ bool GenPath::OnStartUp()
     string line  = *p;
     string param = tolower(biteStringX(line, '='));
     string value = line;
-    std::cout<<"param: "<<param<<", value: "<<value<<std::endl;;
+    //std::cout<<"param: "<<param<<", value: "<<value<<std::endl;;
     bool handled = false;
     if(param == "foo") {
       handled = true;
@@ -282,11 +282,11 @@ bool GenPath::OnStartUp()
       //handled                                                                            
       //Convert value to double                                                            
       stringstream vr;
-      std::cout<<"entered visit radius param: "<<param<<std::endl;
+      //std::cout<<"entered visit radius param: "<<param<<std::endl;
       
       vr<<value;
       vr>>m_visit_radius;
-      std::cout<< "set visit radius: "<<m_visit_radius<<std::endl;
+      //std::cout<< "set visit radius: "<<m_visit_radius<<std::endl;
 
     }
 
@@ -480,7 +480,7 @@ void GenPath::handleMailRegenerateFirstTime(std::string sval){
 void GenPath::findRevisitPoints(){
    int temp_index=0;
    for (std::vector<double>::iterator k = m_dist_to_point.begin(); k != m_dist_to_point.end(); ++k){                                                                                                                      
-          std::cout<<"dist: "<<*k<<std::endl;                                                                                                                                                                                     
+     //  std::cout<<"dist: "<<*k<<std::endl;                                                                                                                                                                                     
           if ((*k>m_visit_radius)){ //Miss                                                                                                                                                                                        
           //Check if already have number                                                                                                                                                                                          
                                                                                                                                                                                                                                   
