@@ -93,8 +93,8 @@ bool GenPath::OnNewMail(MOOSMSG_LIST &NewMail)
       handleMailRegenerateFirstTime(sval);
       }
 
-     else if(key != "APPCAST_REQ") // handled by AppCastingMOOSApp
-       reportRunWarning("Unhandled Mail: " + key);
+   //  else if(key != "APPCAST_REQ") // handled by AppCastingMOOSApp
+     //  reportRunWarning("Unhandled Mail: " + key);
     }
 	
    return(true);
@@ -115,13 +115,14 @@ bool GenPath::OnConnectToServer()
 
 bool GenPath::Iterate()
 {
+	
   AppCastingMOOSApp::Iterate();
   // Do your thing here!
   if ((m_all_points_mail==true && m_all_points_posted == false)){
     m_first_time = true;
   }
 
-  if (m_first_time==false){
+  if (m_first_time==false){ //Change !m_first_time m_regenerate 
     if (m_regenerate==true){
       
       
@@ -315,6 +316,7 @@ void GenPath::registerVariables()
 
 bool GenPath::buildReport() 
 {
+	cout << "About to start build report "<<endl;
   m_msgs << "============================================"<< endl;
   m_msgs << "File:                                       " << endl;
   m_msgs << "============================================" << endl;
@@ -327,13 +329,19 @@ bool GenPath::buildReport()
   m_msgs << "First time through distance points: "<< m_first_dist_to_point << endl;
 
 
-  ACTable actab(2);
+/*  ACTable actab(2);
   actab << "Visit Point# | Distances";
   actab.addHeaderLines();
+
+if (!m_dist_to_point.empty()) {
   for (int dd = 0; dd<m_dist_to_point.size(); dd++){ 
+cout << "in for loop about to look at m_dist_to_point with size:" << m_dist_to_point.size() << endl;
     actab << dd<<m_dist_to_point[dd];
   }
   m_msgs << actab.getFormattedString();
+}*/
+
+cout << "about to return from buildReport()"<<endl;
 
   return(true);
 }
