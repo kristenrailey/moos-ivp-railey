@@ -40,7 +40,6 @@ class GenPath : public AppCastingMOOSApp
    void handleMailRegenerateFirstTime(std::string sval);
    void handleMailNodeReportLocal(std::string sval);
    void findRevisitPoints();
-   void resetAllLists();
 protected:
    void registerVariables();
 

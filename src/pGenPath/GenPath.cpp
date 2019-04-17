@@ -125,33 +125,11 @@ bool GenPath::Iterate()
     if (m_regenerate==true){
       
       
-      int temp_index=0;
+// added to function      int temp_index=0;
       
       m_current_size =m_dist_to_point.size();
       if (m_finished_search ==true){ //added this
-        for (std::vector<double>::iterator k = m_dist_to_point.begin(); k != m_dist_to_point.end(); ++k){
-	  std::cout<<"dist: "<<*k<<std::endl;
-	  if ((*k>m_visit_radius)){ //Miss                                                   
-          //Check if already have number                                                     
-	  
-	    std::string id_str = tokStringParse(m_points_ordered[temp_index], "id", ',', '=');
-	    if(std::find(m_id_revisit_points.begin(), m_id_revisit_points.end(), id_str) !=m_id_revisit_points.end()) { 
-	      temp_index++;
-	      std::cout<<"already have it"<<std::endl;
-	    } //already have it                                                             
-	    else{
-	    //if unique id., push back                                                    
-	      m_id_revisit_points.push_back(id_str);
-
-	    
-	      m_revisit_points.push_back(m_points_ordered[temp_index]);
-	      temp_index++;
-	    }
-	  }
-	  else{ //Hit                                                                        
-	    temp_index++;
-	  }
-        }
+	findRevisitPoints();
       }
       std::cout<<"size of revisit points: "<<m_revisit_points.size()<<", finished search: "<<m_finished_search<<std::endl;
       if ((m_revisit_points.size()==0)&&(m_finished_search==true)){ //DONE                   
@@ -166,7 +144,8 @@ bool GenPath::Iterate()
       else if ((m_revisit_points.size()>0)&&(m_finished_search==true)){
         Notify("MISSED_POINTS","true");
         m_visit_points.insert(m_visit_points.end(), m_revisit_points.begin(), m_revisit_points.end());
-        m_revisit_points.clear(); //Clear all lists                                          
+	resetAllLists();    
+/*    m_revisit_points.clear(); //Clear all lists                                          
         m_dist_to_point.clear();
         m_index_points.clear();
 	m_points_ordered.clear(); // added this
@@ -175,7 +154,7 @@ bool GenPath::Iterate()
         m_nav_x.clear();
         m_nav_y.clear();
         m_current_size = 0;
-        m_previous_size =0;
+        m_previous_size =0;*/
 	m_first_dist_to_point = 0; //Added this
         m_finished_search = false;
         Notify("FINISHED_SEARCH","false");
@@ -185,7 +164,7 @@ bool GenPath::Iterate()
       else if((m_revisit_points.size()>0)&&(m_first_time_regen==true)){
         Notify("MISSED_POINTS","true");
         m_visit_points.insert(m_visit_points.end(), m_revisit_points.begin(), m_revisit_points.end());
-        m_revisit_points.clear(); //Clear all lists                                          
+    /*    m_revisit_points.clear(); //Clear all lists                                          
         m_dist_to_point.clear();
         m_index_points.clear();
         m_dist_final_val.clear();
@@ -194,7 +173,8 @@ bool GenPath::Iterate()
         m_nav_x.clear();
         m_nav_y.clear();
         m_current_size = 0;
-        m_previous_size =0;
+        m_previous_size =0;*/
+	resetAllLists();
         m_first_time_regen=false;
 	Notify("FINISHED_SEARCH","false"); // added this
 	Notify("FINISH_STATUS","revisit missed points, first time");
@@ -565,3 +545,65 @@ void GenPath::handleMailRegenerateFirstTime(std::string sval){
 
   }
 }
+
+
+void GenPath::findRevisitPoints(){
+   int temp_index=0;
+   for (std::vector<double>::iterator k = m_dist_to_point.begin(); k != m_dist_to_point.end(); ++k){                                                                                                                      
+          std::cout<<"dist: "<<*k<<std::endl;                                                                                                                                                                                     
+          if ((*k>m_visit_radius)){ //Miss                                                                                                                                                                                        
+          //Check if already have number                                                                                                                                                                                          
+                                                                                                                                                                                                                                  
+            std::string id_str = tokStringParse(m_points_ordered[temp_index], "id", ',', '=');                                                                                                                                    
+            if(std::find(m_id_revisit_points.begin(), m_id_revisit_points.end(), id_str) !=m_id_revisit_points.end()) {                                                                                                           
+              temp_index++;                                                                                                                                                                                                       
+              std::cout<<"already have it"<<std::endl;                                                                                                                                                                            
+            } //already have it                                                                                                                                                                                                   
+            else{                                                                                                                                                                                                                 
+            //if unique id., push back                                                                                                                                                                                            
+              m_id_revisit_points.push_back(id_str);                                                                                                                                                                              
+                                                                                                                                                                                                                                  
+                                                                                                                                                                                                                                  
+              m_revisit_points.push_back(m_points_ordered[temp_index]);                                                                                                                                                           
+              temp_index++;                                                                                                                                                                                                       
+            }                                                                                                                                                                                                                     
+          }                                                                                                                                                                                                                       
+          else{ //Hit                                                                                                                                                                                                             
+            temp_index++;                                                                                                                                                                                                         
+          }                                                                                                                                                                                                                       
+          }
+}
+
+
+
+
+void GenPath::resetAllLists(){
+	m_revisit_points.clear(); //Clear all lists                                          
+	m_dist_to_point.clear();
+	m_index_points.clear();
+	m_points_ordered.clear(); // added this
+        m_id_revisit_points.clear();
+        m_dist_final_val.clear();
+        m_nav_x.clear();
+        m_nav_y.clear();
+        m_current_size = 0;
+        m_previous_size =0;
+}
+
+
+
+
+	//m_first_dist_to_point = 0; //Added this
+
+
+
+    //    m_first_time_regen=false;
+
+
+
+
+
+
+
+
+
