@@ -149,7 +149,10 @@ Behavior = BHV_Waypoint
   endflag = GENPATH_REGENERATE =true
   endflag = FIRST_TIME = false
   endflag = FIRST_TIME_REGEN = true
-
+  //added this:
+  endflag = FINISHED_SEARCH = true
+  runflag = FINISHED_SEARCH = false
+  
 
 }
 
@@ -209,7 +212,7 @@ Behavior = BHV_Waypoint
   updates = TRANSIT_UPDATES_MISSED_POINTS
     // Parameters specific to this behavior
    // ------------------------------------
-      capture_radius = 0.1                       // default
+      capture_radius = 0.1                       // default 0.1 for old version
         capture_line = false                   // default
        //   cycle_flag = COMMS_NEEDED=true       // example
      //           lead = -1                      // default
