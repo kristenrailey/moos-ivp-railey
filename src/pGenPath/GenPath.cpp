@@ -131,7 +131,7 @@ bool GenPath::Iterate()
       if (m_finished_search ==true){ //added this
 	findRevisitPoints();
       }
-      std::cout<<"size of revisit points: "<<m_revisit_points.size()<<", finished search: "<<m_finished_search<<std::endl;
+      //std::cout<<"size of revisit points: "<<m_revisit_points.size()<<", finished search: "<<m_finished_search<<std::endl;
       if ((m_revisit_points.size()==0)&&(m_finished_search==true)){ //DONE                   
         Notify("RETURN","true");
         Notify("SEARCH","false");
@@ -145,16 +145,6 @@ bool GenPath::Iterate()
         Notify("MISSED_POINTS","true");
         m_visit_points.insert(m_visit_points.end(), m_revisit_points.begin(), m_revisit_points.end());
 	resetAllLists();    
-/*    m_revisit_points.clear(); //Clear all lists                                          
-        m_dist_to_point.clear();
-        m_index_points.clear();
-	m_points_ordered.clear(); // added this
-        m_id_revisit_points.clear();
-        m_dist_final_val.clear();
-        m_nav_x.clear();
-        m_nav_y.clear();
-        m_current_size = 0;
-        m_previous_size =0;*/
 	m_first_dist_to_point = 0; //Added this
         m_finished_search = false;
         Notify("FINISHED_SEARCH","false");
@@ -164,16 +154,6 @@ bool GenPath::Iterate()
       else if((m_revisit_points.size()>0)&&(m_first_time_regen==true)){
         Notify("MISSED_POINTS","true");
         m_visit_points.insert(m_visit_points.end(), m_revisit_points.begin(), m_revisit_points.end());
-    /*    m_revisit_points.clear(); //Clear all lists                                          
-        m_dist_to_point.clear();
-        m_index_points.clear();
-        m_dist_final_val.clear();
-        m_id_revisit_points.clear();
-	m_points_ordered.clear(); //added this
-        m_nav_x.clear();
-        m_nav_y.clear();
-        m_current_size = 0;
-        m_previous_size =0;*/
 	resetAllLists();
         m_first_time_regen=false;
 	Notify("FINISHED_SEARCH","false"); // added this
@@ -199,71 +179,21 @@ bool GenPath::Iterate()
   }
 
   if (m_visit_points.size()>0){
-    //Imaginary starting point                                                               
-    double start_x = 0.0;
-    double start_y = 0.0;
-    double current_x, current_y;
-    std::string current_visit_point_str;
-
-
-    //List of points                                                                         
-    XYSegList my_seglist;
-
-    while (m_visit_points.size()>0){
-      current_x=start_x;
-      current_y=start_y;
-      std::vector<std::string>::iterator current_k;
-      double current_min=10000.0;
-      double temp_dist = 0.0;
-
-      //Iterate through points                                                               
-      for (std::vector<std::string>::iterator k = m_visit_points.begin(); k != m_visit_points.end(); ++k){
-        //Get x, y positions from string                                                     
-	std::string x_str = tokStringParse(*k, "x", ',', '=');
-	std::string y_str = tokStringParse(*k, "y", ',', '=');
-        double x_double = 0.0;
-        double y_double = 0.0;
-        stringstream rr;
-        stringstream ww;
-        rr<<x_str;
-        ww<<y_str;
-        rr>>x_double;
-        ww>>y_double;
-        //Calculate distance                                                                 
-        temp_dist=sqrt(pow((x_double-start_x),2)+pow((y_double-start_y),2));
-        if (temp_dist<current_min){  // Check if less than current min, update               
-          current_min=temp_dist;
-          current_x=x_double;
-          current_y=y_double;
-          current_k=k;
-          current_visit_point_str = *k;
-        }
-      }
-      //Add to seglist. Pop off best value.Update start point.                               
-
-
-      my_seglist.add_vertex(current_x,current_y);
-      m_points_ordered.push_back(current_visit_point_str); //Added this                      
-      m_visit_points.erase(current_k); //Updated for generating path to traverse             
-      start_x = current_x;
-      start_y = current_y;
-    }
-    std::string updates_str = "points = ";
-    updates_str +=my_seglist.get_spec();
+	std::string updates_str = updateTransitPointsTSM(); //Update with travelling salesman, greedy nearest
 
     //If first time                                                                          
     if (m_first_time ==true){
       Notify("FIRST_TIME","true");
       Notify("TRANSIT_UPDATES_FIRST_TIME",updates_str);
       Notify("SEARCH","true");
-      std::cout<<"sent notifications"<<std::endl;
+      //std::cout<<"sent notifications"<<std::endl;
       m_all_points_posted = true;
       UnRegister("VISIT_POINT");
       m_first_dist_to_point = 0;
       m_first_time = false; //Next time will be revisit points                               
     }
     else if (m_regenerate==true){
-      std::cout<<"update missed points, regen: "<<updates_str<<std::endl;
+      //std::cout<<"update missed points, regen: "<<updates_str<<std::endl;
       Notify("TRANSIT_UPDATES_MISSED_POINTS",updates_str);
       Notify("MISSED_POINTS","true");
       m_first_dist_to_point = 0; // added this
@@ -279,12 +209,12 @@ bool GenPath::Iterate()
 
   //NEW STUFF                                                                                
 
-  
+ // updateMinimumDistanceToPoint(); 
   int index_int = 0;
   
   for (std::vector<std::string>::iterator k = m_points_ordered.begin(); k != m_points_ordered.end(); ++k){
     double current_min = 1000.0;
-    std::cout<< "m first dist to point: "<< m_first_dist_to_point<<std::endl;
+    //std::cout<< "m first dist to point: "<< m_first_dist_to_point<<std::endl;
     if (m_first_dist_to_point == 0){
       m_dist_to_point.push_back(current_min);
     }
@@ -309,13 +239,13 @@ bool GenPath::Iterate()
 	current_min=temp_dist;
 	}
     }	
-    std::cout<<" m idst to point size: "<< m_dist_to_point.size() << ", index int: " << index_int <<" min: "<<current_min << std::endl;
+    //std::cout<<" m idst to point size: "<< m_dist_to_point.size() << ", index int: " << index_int <<" min: "<<current_min << std::endl;
     m_dist_to_point[index_int] = current_min; //Update to current min                        
     
     index_int++;
   }	
       
-                                                                                        
+                                                                                
  
   m_first_dist_to_point = 1;
 
@@ -343,7 +273,7 @@ bool GenPath::OnStartUp()
     string line  = *p;
     string param = tolower(biteStringX(line, '='));
     string value = line;
-    std::cout<<"param: "<<param<<", value: "<<value<<std::endl;;
+    //std::cout<<"param: "<<param<<", value: "<<value<<std::endl;;
     bool handled = false;
     if(param == "foo") {
       handled = true;
@@ -352,11 +282,11 @@ bool GenPath::OnStartUp()
       //handled                                                                            
       //Convert value to double                                                            
       stringstream vr;
-      std::cout<<"entered visit radius param: "<<param<<std::endl;
+      //std::cout<<"entered visit radius param: "<<param<<std::endl;
       
       vr<<value;
       vr>>m_visit_radius;
-      std::cout<< "set visit radius: "<<m_visit_radius<<std::endl;
+      //std::cout<< "set visit radius: "<<m_visit_radius<<std::endl;
 
     }
 
@@ -550,7 +480,7 @@ void GenPath::handleMailRegenerateFirstTime(std::string sval){
 void GenPath::findRevisitPoints(){
    int temp_index=0;
    for (std::vector<double>::iterator k = m_dist_to_point.begin(); k != m_dist_to_point.end(); ++k){                                                                                                                      
-          std::cout<<"dist: "<<*k<<std::endl;                                                                                                                                                                                     
+     //  std::cout<<"dist: "<<*k<<std::endl;                                                                                                                                                                                     
           if ((*k>m_visit_radius)){ //Miss                                                                                                                                                                                        
           //Check if already have number                                                                                                                                                                                          
                                                                                                                                                                                                                                   
@@ -592,12 +522,101 @@ void GenPath::resetAllLists(){
 
 
 
+std::string GenPath::updateTransitPointsTSM(){
+   //Imaginary starting point                                                               
+    double start_x = 0.0;
+    double start_y = 0.0;
+    double current_x, current_y;
+    std::string current_visit_point_str;
 
-	//m_first_dist_to_point = 0; //Added this
+
+    //List of points                                                                         
+    XYSegList my_seglist;
+
+    while (m_visit_points.size()>0){
+      current_x=start_x;
+      current_y=start_y;
+      std::vector<std::string>::iterator current_k;
+      double current_min=10000.0;
+      double temp_dist = 0.0;
+
+      //Iterate through points                                                               
+      for (std::vector<std::string>::iterator k = m_visit_points.begin(); k != m_visit_points.end(); ++k){
+        //Get x, y positions from string                                                     
+	std::string x_str = tokStringParse(*k, "x", ',', '=');
+	std::string y_str = tokStringParse(*k, "y", ',', '=');
+        double x_double = 0.0;
+        double y_double = 0.0;
+        stringstream rr;
+        stringstream ww;
+        rr<<x_str;
+        ww<<y_str;
+        rr>>x_double;
+        ww>>y_double;
+        //Calculate distance                                                                 
+        temp_dist=sqrt(pow((x_double-start_x),2)+pow((y_double-start_y),2));
+        if (temp_dist<current_min){  // Check if less than current min, update               
+          current_min=temp_dist;
+          current_x=x_double;
+          current_y=y_double;
+          current_k=k;
+          current_visit_point_str = *k;
+        }
+      }
+      //Add to seglist. Pop off best value.Update start point.                               
 
 
+      my_seglist.add_vertex(current_x,current_y);
+      m_points_ordered.push_back(current_visit_point_str); //Added this                      
+      m_visit_points.erase(current_k); //Updated for generating path to traverse             
+      start_x = current_x;
+      start_y = current_y;
+    }
+    std::string updates_str = "points = ";
+    updates_str +=my_seglist.get_spec();
+  return updates_str;
+}
 
-    //    m_first_time_regen=false;
+
+/*void GenPath::updateMinimumDistanceToPoint(){
+  int index_int = 0;
+  
+  for (std::vector<std::string>::iterator k = m_points_ordered.begin(); k != m_points_ordered.end(); ++k){
+    double current_min = 1000.0;
+    std::cout<< "m first dist to point: "<< m_first_dist_to_point<<std::endl;
+    if (m_first_dist_to_point == 0){
+      m_dist_to_point.push_back(current_min);
+    }
+  
+    
+    std::string x_str = tokStringParse(*k, "x", ',', '=');
+    std::string y_str = tokStringParse(*k, "y", ',', '=');
+    double x_double = 0.0;
+    double y_double = 0.0;
+    stringstream rr;
+    stringstream ww;
+    rr<<x_str;
+    ww<<y_str;
+    rr>>x_double;
+    ww>>y_double;
+
+  
+    for (int node_index_temp = 0;node_index_temp<m_nav_x.size();node_index_temp++){  
+      double temp_dist=pow((pow((x_double-m_nav_x[node_index_temp]),2)+pow((y_double-m_nav_y[node_index_temp]),2)),0.5);
+      if (temp_dist<current_min){  // Check if less than current min, update. X,y should be pairs (indices should be close) 
+	//std::cout<<"index: "<<index_int<<"x,y: "<<x_double<<", "<<y_double<<", new min: "<<m_nav_x[node_index_temp]<<", "<<m_nav_x[node_index_temp]<<"dist: "<<current_min<<std::endl;                                     
+	current_min=temp_dist;
+	}
+    }	
+    std::cout<<" m idst to point size: "<< m_dist_to_point.size() << ", index int: " << index_int <<" min: "<<current_min << std::endl;
+    m_dist_to_point[index_int] = current_min; //Update to current min                        
+    
+    index_int++;
+  }	
+      
+}*/
+
+
 
 
 

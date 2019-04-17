@@ -41,6 +41,8 @@ class GenPath : public AppCastingMOOSApp
    void handleMailNodeReportLocal(std::string sval);
    void findRevisitPoints();
    void resetAllLists();
+   std::string updateTransitPointsTSM();
+   void updateMinimumDistanceToPoint();
 protected:
    void registerVariables();
 
