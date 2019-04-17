@@ -154,6 +154,7 @@ bool GenPath::Iterate()
         Notify("RETURN","true");
         Notify("SEARCH","false");
         Notify("MISSED_POINTS","false");
+	Notify("FINISH_STATUS", "No missed points, notified to return, finished search is true");
 	m_finished_status = "No missed points, notified to return, finished search is true";
         m_regenerate = false;
         return (true);
@@ -164,6 +165,7 @@ bool GenPath::Iterate()
         m_revisit_points.clear(); //Clear all lists                                          
         m_dist_to_point.clear();
         m_index_points.clear();
+	m_points_ordered.clear(); // added this
         m_id_revisit_points.clear();
         m_dist_final_val.clear();
         m_nav_x.clear();
@@ -173,6 +175,7 @@ bool GenPath::Iterate()
 	m_first_dist_to_point = 0; //Added this
         m_finished_search = false;
         Notify("FINISHED_SEARCH","false");
+	Notify("FINISH_STATUS","finished a search, visit missed points");
 	m_finished_status = "finished a search, visit missed points";
       }
       else if((m_revisit_points.size()>0)&&(m_first_time_regen==true)){
@@ -183,17 +186,20 @@ bool GenPath::Iterate()
         m_index_points.clear();
         m_dist_final_val.clear();
         m_id_revisit_points.clear();
+	m_points_ordered.clear(); //added this
         m_nav_x.clear();
         m_nav_y.clear();
         m_current_size = 0;
         m_previous_size =0;
         m_first_time_regen=false;
+	Notify("FINISH_STATUS","revisit missed points, first time");
 	m_finished_status = "revisit missed points, first time";
       }
       else if((m_revisit_points.size()==0)&&(m_first_time_regen==true)){ //DONE              
         Notify("RETURN","true");
         Notify("SEARCH","false");
         Notify("MISSED_POINTS","false");
+	Notify("FINISH_STATUS","Notified to return, no missed points");
 	m_finished_status = "Notified to return, no missed points";
         m_regenerate = false;
         return (true);

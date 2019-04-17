@@ -130,12 +130,14 @@ bool GenPath::Iterate()
       m_current_size =m_dist_to_point.size();
       
       for (std::vector<double>::iterator k = m_dist_to_point.begin(); k != m_dist_to_point.end(); ++k){
-	//std::cout<<"dist: "<<*k<<std::endl;
+	std::cout<<"dist: "<<*k<<std::endl;
 	if ((*k>m_visit_radius)){ //Miss                                                   
           //Check if already have number                                                     
+	  
 	  std::string id_str = tokStringParse(m_points_ordered[temp_index], "id", ',', '=');
 	  if(std::find(m_id_revisit_points.begin(), m_id_revisit_points.end(), id_str) !=m_id_revisit_points.end()) { 
 	    temp_index++;
+	    std::cout<<"already have it"<<std::endl;
 	  } //already have it                                                             
 	  else{
 	    //if unique id., push back                                                    
@@ -150,10 +152,12 @@ bool GenPath::Iterate()
 	  temp_index++;
 	}
       }
+      std::cout<<"size of revisit points: "<<m_revisit_points.size()<<", finished search: "<<m_finished_search<<std::endl;
       if ((m_revisit_points.size()==0)&&(m_finished_search==true)){ //DONE                   
         Notify("RETURN","true");
         Notify("SEARCH","false");
         Notify("MISSED_POINTS","false");
+	Notify("FINISH_STATUS", "No missed points, notified to return, finished search is true");
 	m_finished_status = "No missed points, notified to return, finished search is true";
         m_regenerate = false;
         return (true);
@@ -174,6 +178,7 @@ bool GenPath::Iterate()
 	m_first_dist_to_point = 0; //Added this
         m_finished_search = false;
         Notify("FINISHED_SEARCH","false");
+	Notify("FINISH_STATUS","finished a search, visit missed points");
 	m_finished_status = "finished a search, visit missed points";
       }
       else if((m_revisit_points.size()>0)&&(m_first_time_regen==true)){
@@ -190,12 +195,14 @@ bool GenPath::Iterate()
         m_current_size = 0;
         m_previous_size =0;
         m_first_time_regen=false;
+	Notify("FINISH_STATUS","revisit missed points, first time");
 	m_finished_status = "revisit missed points, first time";
       }
       else if((m_revisit_points.size()==0)&&(m_first_time_regen==true)){ //DONE              
         Notify("RETURN","true");
         Notify("SEARCH","false");
         Notify("MISSED_POINTS","false");
+	Notify("FINISH_STATUS","Notified to return, no missed points");
 	m_finished_status = "Notified to return, no missed points";
         m_regenerate = false;
         return (true);
@@ -320,7 +327,7 @@ bool GenPath::Iterate()
 	current_min=temp_dist;
 	}
     }	
-    std::cout<<" m idst to point size: "<< m_dist_to_point.size() << ", index int: " << index_int << std::endl;
+    std::cout<<" m idst to point size: "<< m_dist_to_point.size() << ", index int: " << index_int <<" min: "<<current_min << std::endl;
     m_dist_to_point[index_int] = current_min; //Update to current min                        
     
     index_int++;
