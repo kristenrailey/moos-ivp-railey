@@ -276,7 +276,7 @@ bool GenPath::OnStartUp()
       stringstream vr;   
       vr<<value;
       vr>>m_visit_radius;
-   
+     handled = true; //REmember to do this for params
     }
 
     else if(param == "bar") {
