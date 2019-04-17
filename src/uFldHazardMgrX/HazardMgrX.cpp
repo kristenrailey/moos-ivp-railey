@@ -27,6 +27,7 @@
 #include <iterator>
 #include <list>
 #include <map>
+#include <random>
 #include <set>
 #include <string>
 
@@ -34,8 +35,10 @@
 #include <math.h>
 #include <random>
 
+
 #include "MBUtils.h"
 #include "NodeMessage.h"
+#include "NodeMessageUtils.h"
 #include "HazardMgrX.h"
 #include "HazardSearch.h"
 #include "XYFormatUtilsHazard.h"
@@ -55,8 +58,15 @@ HazardMgrX::HazardMgrX()
   m_pd_desired          = 0.9;
 
   // State Variables 
+  m_ready_to_send_msg = true;
+  m_compile_hazard_set_now  = false;
+  m_hazard_sharing_complete = false;
   m_sensor_config_requested = false;
+  m_waiting_for_ack     = false;
   m_sensor_config_set   = false;
+  m_send_ack_msg_now    = false;
+  m_collab_haz_reported = 0;
+  m_self_haz_reported   = 0;
   m_swath_width_granted = 0;
   m_pd_granted          = 0;
   m_pfa_granted         = 0;
@@ -67,10 +77,7 @@ HazardMgrX::HazardMgrX()
   m_sensor_report_reqs = 0;
   m_detection_reports  = 0;
 
-  m_summary_reports    = 0;
-
-  // number of times an obstacle is passed over
-  // TODO make new variable posting when next lawnmower begins 
+  m_summary_reports    = 0; 
   m_num_passes         = 0;
 }
 
@@ -106,9 +113,27 @@ bool HazardMgrX::OnNewMail(MOOSMSG_LIST &NewMail)
     else if(key == "UHZ_MISSION_PARAMS") 
       handleMailMissionParams(sval);
 
+    else if(key == "HAZARD_SHARE_UP") 
+      handleNodeMessage(sval);
+
+    else if(key == "HAZARD_MSG_READY") {
+      if (sval  == "true"){
+        m_ready_to_send_msg = true;
+        handleHazardMsgReady();
+      }
+      else {
+        m_ready_to_send_msg = false;
+      }
+    }
+
+    else if(key == "RETURN") {
+      if (sval == "true") 
+        m_compile_hazard_set_now = true;
+    }
+
     else if(key == "FINISHED_SEARCH") {
       if (sval == "true") 
-        m_num_passes++;
+        m_num_passes+= 2;
     }
 
     else 
@@ -143,17 +168,68 @@ bool HazardMgrX::Iterate()
   if(m_sensor_config_set)
     postSensorInfoRequest();
 
-  if(m_node_message_queue.size()>0) {
-    NodeMessage msg;
-    msg.setSourceNode(m_host_community);
-    msg.setDestNode("all");
-    msg.setVarName("HAZARD_SEARCH_UP");
-    msg.setStringVal(m_hazard_search.GetHazardNodeMessage(m_node_message_queue.front()));
-    Notify("NODE_MESSAGE_LOCAL", msg.getSpec());
+
+  if (m_compile_hazard_set_now) {
+    
+    // iterate through the list of hazards that have been detected before 
+    if (m_hazard_search_set.size() > 0){
+      set<string>::iterator it = m_hazard_search_set.begin();
+      while (it != m_hazard_search_set.end()){
+
+        // construct a hazard from the hazard_string
+        XYHazard new_hazard = string2Hazard(*it);
+
+        // if the hazard is to be declared as a hazard and the hazard_set does 
+        // not already contain it, it will be added to the hazard_set
+        if (calcHazardBelief(new_hazard.getLabel())) {
+          if (!m_hazard_set.hasHazard(new_hazard.getLabel())){
+            m_hazard_set.addHazard(new_hazard);
+            m_self_haz_reported++;
+            m_node_message_queue.push_back(*it);
+          }
+        }
+        it++; 
+      }
+    }
   }
 
   AppCastingMOOSApp::PostReport();
   return(true);
+}
+
+
+//---------------------------------------------------------
+// Procedure: handleHazardMsgReady
+
+void HazardMgrX::handleHazardMsgReady()
+{
+  // proceed if we are ready to send a new message
+  if (m_ready_to_send_msg) {
+
+      // send an acknowledgment message 
+      if (m_send_ack_msg_now) {
+        NodeMessage msg;
+        msg.setSourceNode(m_host_community);
+        msg.setDestNode("all");
+        msg.setVarName("HAZARD_SHARE_UP");
+        msg.setStringVal("ack");
+        Notify("HAZARD_MSG_READY", "false");
+        Notify("NODE_MESSAGE_LOCAL", msg.getSpec());
+        m_send_ack_msg_now = false;
+        m_ready_to_send_msg = false;
+
+      // otherwise, check if we have a message to send
+      } else if (m_node_message_queue.size() > 0){
+          NodeMessage msg;
+          msg.setSourceNode(m_host_community);
+          msg.setDestNode("all");
+          msg.setVarName("HAZARD_SHARE_UP");
+          msg.setStringVal(m_node_message_queue.front());
+          Notify("HAZARD_MSG_READY", "false");
+          Notify("NODE_MESSAGE_LOCAL", msg.getSpec());
+          m_ready_to_send_msg = false;
+      }
+   }  
 }
 
 
@@ -224,6 +300,9 @@ void HazardMgrX::registerVariables()
   Register("UHZ_MISSION_PARAMS", 0);
   Register("HAZARDSET_REQUEST", 0);
   Register("FINISHED_SEARCH", 0);
+  Register("HAZARD_SHARE_UP", 0);
+  Register("HAZARD_MSG_READY", 0);
+  Register("RETURN", 0);
 }
 
 
@@ -251,6 +330,32 @@ void HazardMgrX::postSensorInfoRequest()
 
   m_sensor_report_reqs++;
   Notify("UHZ_SENSOR_REQUEST", request);
+}
+
+
+//---------------------------------------------------------
+// Procedure: handleNodeMessage
+
+void HazardMgrX::handleNodeMessage(string node_message_str)
+{
+  // handle the acknowledgment response -> send next message
+  if (node_message_str == "ack") {
+    m_ack_messages_received++;
+    m_node_message_queue.pop_front();
+  }
+
+  // add the collaborators hazard to the report 
+  else {
+    m_latest_received_node_msg = node_message_str;
+    XYHazard new_hazard = string2Hazard(node_message_str);
+    if (!m_hazard_set.hasHazard(new_hazard.getLabel())){
+      m_hazard_set.addHazard(new_hazard);
+      m_collab_haz_reported++;
+    }
+
+    // send ack to collaborator on next message send opportunity
+    m_send_ack_msg_now = true;
+  }
 }
 
 
@@ -328,8 +433,10 @@ bool HazardMgrX::handleMailDetectionReport(string str)
   string event = "New Det, label=" + hazlabel;
   reportEvent(event);
 
-  // TODO add to queue of items to continually request (add hazard itself to queue)
-  string req = "vname=" + m_host_community + ",label=" + hazlabel;
+  // add newly detected items to the top of the classification queue
+  string req = "vname=" + m_host_community + 
+               ",label=" + hazlabel + 
+               ",priority=100,action=top";
   Notify("UHZ_CLASSIFY_REQUEST", req);
 
   m_hazard_search_set.insert(str);
@@ -344,12 +451,6 @@ bool HazardMgrX::handleMailDetectionReport(string str)
   else {
     m_hazard_search.m_simple_detect_map[hazlabel]=1;
   }
-
-  // check if node message is already on the queue
-  // TODO change this to just sharing the final decision with other vehicle 
-  // TODO take the set union between vehicles regarding what to send in the hazard request 
-  m_node_message_queue.push_back(search_id);
-
   return(true);
 }
 
@@ -396,10 +497,6 @@ bool HazardMgrX::handleMailHazardReport(string str)
       m_hazard_search.m_simple_classify_map[hazlabel]=1;
     }
   }
-
-  // TODO check if node message is already on the queue
-  m_node_message_queue.push_back(search_id);
-
   return(true);
 }
 
@@ -457,10 +554,19 @@ bool HazardMgrX::buildReport()
   //  + 'ClassReq' is the number of classification requests
   //  + 'ClassHaz' is the number of times the obstacle is classified as a hazard
   m_msgs << "--------------------------------------------"       << endl;
-  m_msgs << "Detection/Classification Summary:"                  << endl;
+  m_msgs << "Total  Haz Reported: " << to_string(m_hazard_set.size()) << endl;
+  m_msgs << "Self   Haz Reported: " << to_string(m_self_haz_reported) << endl;
+  m_msgs << "Collab Haz Reported: " << to_string(m_collab_haz_reported) << endl;
+  m_msgs << "--------------------------------------------"       << endl;
+  m_msgs << "Self   Obj Detected: " << to_string(m_simple_hazard_set.size()) << endl;
+  m_msgs << "Self   Haz MsgQueue: " << to_string(m_node_message_queue.size()) << endl;
+  m_msgs << "Self   Ack Received: " << to_string(m_ack_messages_received) << endl;
+  m_msgs << "--------------------------------------------"       << endl;
+  m_msgs << "Last   Msg Received: " << m_latest_received_node_msg << endl;
+  m_msgs << "--------------------------------------------"       << endl;
   ACTable actab(7);
   string vname = m_host_community; 
-  actab << "HazID | # | NumPass | ActDet | ClassReq | ClassHaz | # ";
+  actab << "HazID | # | NumPass | Detects | ClassReqs | ClassHaz | # ";
   actab.addHeaderLines();
 
   // add a new line to the table for each element seen
@@ -528,61 +634,70 @@ bool HazardMgrX::buildReport()
 }
 
 
-//--------------------------------------------------------------
-bool HazardMgrX::calcHazardBelief(std::string label){
-
-  //std::string label = "25";
-  //Access map                                                                                                                                                                                                     
-  int num_detections=m_hazard_search.m_simple_detect_map[label]; // = m_simple_map[label]                                                                                                                                                                   
+//--------------------------------------------------------------                                                            
+bool HazardMgrX::calcHazardBelief(std::string label){                                                                        
+  int num_detections=m_hazard_search.m_simple_detect_map[label]; 
   int num_lawnmowers=m_num_passes;
   int num_hazards = m_hazard_search.m_simple_classify_map[label];
   int num_requests=m_hazard_search.m_simple_request_map[label];
-  //Given                                                                                                                                                                                                          
+  //Given                                                                                                                  
+                                                                                                                              
   double Pd = m_pd_granted;
   double Pf = m_pfa_granted;
   double Pc = m_pc_granted;
-  //double penalty_miss = 50; //Normalized                                                                                                                                                                           
-  //double penalty_fa = 50;
-  //Detections-----                                                                                                                                                                                                
-  // Assuming two passes                                                                                                                                                                                           
-  //Given hazard:                                                                                                                                                                                                  
+  //double penalty_miss = 50; //Normalized                                                                                 
+                                                                                                            
+  //double penalty_fa = 50;                                                                                                 
+  //Detections-----                                                                                                        
+                                                                                                                              
+  // Assuming two passes                                                                                                   
+                                                                                                                              
+  //Given hazard:                                                                                                          
+                                                                                                                              
   double prob_dd_given_H = pow(Pd,2);
-  double prob_dn_given_H = Pd*(1-Pd);
-  double prob_nd_given_H = Pd*(1-Pd);
+  //double prob_dn_given_H = Pd*(1-Pd);
+    double prob_nd_given_H = Pd*(1-Pd);
   double prob_nn_given_H = pow((1-Pd),2);
-  //Given benign:                                                                                                                                                                                                  
+  //Given benign:                                                                                                          
+       
+
+                                                                                                                              
   double prob_dd_given_B = pow(Pf,2);
-  //(Not used)  double prob_dn_given_B = Pf*(1-Pf);
+  //(Not used)  double prob_dn_given_B = Pf*(1-Pf);                                                                         
   double prob_nd_given_B = Pf*(1-Pf);
   double prob_nn_given_B = pow((1-Pf),2);
   std::cout<<"Results: "<<prob_dd_given_H<<","<<prob_nd_given_H<<","<<prob_nn_given_H<<std::endl;
   std::cout<<"Results: "<<prob_dd_given_B<<","<<prob_nd_given_B<<","<<prob_nn_given_B<<std::endl;
 
-  //double ratio_penalty = penalty_miss/(penalty_fa);                                                                                                                                                              
-  double decision_ratio_detection;
+  //double ratio_penalty = penalty_miss/(penalty_fa);                                                                      
+                                                                                                                              
+  double decision_ratio_detection = 0.0;
   bool decision_detection;
-  //Cases for detection:                                                                                                                                                                                           
+  //Cases for detection:                                                                                                   
+                                                                                                                              
   if (num_detections >= num_lawnmowers){
     decision_ratio_detection = prob_dd_given_H;
-  }
-  else if (num_detections == 1){
-    decision_ratio_detection = (prob_nd_given_H)*2.0;
-  }
-  else{
-    //Zero detections                                                                                                                                                                                              
-  }
+   }
+   else if (num_detections == 1){
+     decision_ratio_detection = (prob_nd_given_H)*2.0;
+   }
+   else{
+     //Zero detections                                                                                                     
+                                                                                                                              
+   }
 
   if (decision_ratio_detection>0.3){
     decision_detection = true;
-  }
-  else{
-    decision_detection = false;
-  } //COMMENT HERE                                                                                                                                                                                                
+   }
+   else{
+     decision_detection = false;
+   } //COMMENT HERE                                                                                                         
+            
 
-  //std::cout<<"ratio penalty: "<<ratio_penalty<<", decision ratio: "<<decision_ratio_detection<<", decision: "<<decision_detection<<std::endl;                                                                    
-  //Classifications----------                                                                                                                                                                                      
+
   bool decision_classification;
-  //Add check if n>20, then binom will fail                                                                                                                                                                        
+  //Add check if n>20, then binom will fail                                                                                
+                                                                                                                              
   if (num_requests>20){
     std::cout<<"greater than 20, ratio: "<<(double)num_hazards/(double)num_requests<<std::endl;
     if ((double)num_hazards/(double)num_requests>0.3){
@@ -591,44 +706,39 @@ bool HazardMgrX::calcHazardBelief(std::string label){
     else{
       decision_classification = false;
     }
-  }
+   }
   if (num_requests<20){
 
     double prob_hazards_in_requests = binom_distribution(Pc, num_hazards, num_requests);
     std::cout<<"prob of hazards in requests: "<<prob_hazards_in_requests<<std::endl;
-    double decision_ratio_classification = prob_hazards_in_requests/(1-prob_hazards_in_requests); //normalized                                                                                                     
+    double decision_ratio_classification = prob_hazards_in_requests;
+                                                                                                                              
     std::cout<<"decision ratio classification: "<<decision_ratio_classification<<std::endl;
-    if (decision_ratio_classification>0.3){ //try normalizing                                                                                                                                                      
+    if (decision_ratio_classification>0.3){ //try normalizing                                                              
+                                                                                                                              
       decision_classification = true;
     }
     else{
       decision_classification = false;
     }
-  }
+   }
   bool decision_final;
   std::cout<<"Decision: "<<decision_detection<<", "<<decision_classification<<std::endl;
-  if (num_requests>2){
+  if (num_requests>=1){
     decision_final = decision_classification;
-  }
-  else{
-    decision_final = decision_detection;
-  }
+   }
+   else{
+     decision_final = decision_detection;
+   }
   std::cout<<"final decision: "<<decision_final<<std::endl;
   return decision_final;
 }
 
 
 
+//------------------------------------------------------------------                                                        
 
 
-
-
-
-
-
-//------------------------------------------------------------------
-
-// This will fail if n>20                                                                                                                                                                                          
 unsigned long long int HazardMgrX::factorial(long int n){
 
   unsigned long long int result=1;
@@ -643,11 +753,3 @@ double HazardMgrX::binom_distribution(double p,int k,int n){
   double result = binom_coeff*(pow(p,k))*(pow((1-p),(n-k)));
   return result;
 }
-
-
-
-
-
-
-
-
