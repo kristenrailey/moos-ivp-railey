@@ -32,7 +32,7 @@ class PrimeFactor : public CMOOSApp
    void RegisterVariables();
 
  private: // Configuration variables
-   bool m_even;
+   // commented out   bool m_even;
    long unsigned int m_ival;
    long unsigned int m_max_iter;
    int m_index;// For keeping track of number of Prime #s to factor
