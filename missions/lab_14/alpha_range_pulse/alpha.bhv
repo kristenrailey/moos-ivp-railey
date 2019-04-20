@@ -77,5 +77,6 @@ Behavior=BHV_Pulse
 {
   name	= pulse
   pwt	= 100
-
+  pulse_range = 50
+  pulse_duration = 10
 }
