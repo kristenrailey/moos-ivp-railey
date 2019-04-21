@@ -77,6 +77,6 @@ Behavior=BHV_ZigLeg
 {
   name	= zigleg
   pwt	= 100
-  pulse_range = 50
-  pulse_duration = 10
+  zig_duration = 20
+  zig_angle = 90
 }
