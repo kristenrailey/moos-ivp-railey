@@ -61,14 +61,14 @@ bool BHV_ZigLeg::setParam(string param, string val)
   // Get the numerical value of the param argument for convenience once
   double double_val = atof(val.c_str());
   
-  if((param == "pulse_range") && isNumber(val)) {
-    // Set local member variables here
-    m_range = double_val;
+  if((param == "zig_duration") && isNumber(val)) {
+    // Set local member variables herez
+    m_zig_duration = double_val;
     //    return(true);
   }
-  else if ((param == "pulse_duration") && isNumber(val)) {
+  else if ((param == "zig_angle") && isNumber(val)) {
     // return(setBooleanOnString(m_my_bool, val));
-    m_pulse_duration = double_val;
+    m_zig_angle = double_val;
 
   }
   else
