@@ -31,6 +31,11 @@ protected: // Local Utility functions
 protected: // Configuration parameters
 
   double m_osx, m_osy, m_range, m_pulse_duration, m_curr_time, m_wpt_index, m_wpt_index_curr, m_pulse_time, m_heading;
+  double  m_zig_angle, m_zig_duration;
+  int m_temp_int;
+  bool m_past_waypt;
+
+
 protected: // State variables
 };
 

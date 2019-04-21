@@ -33,7 +33,13 @@ BHV_ZigLeg::BHV_ZigLeg(IvPDomain domain) :
   m_wpt_index = 0.0;
   m_wpt_index_curr = 0.0;
   m_pulse_time=0.0;
+  m_curr_time = 0.0;
   m_heading = 0.0;
+  m_zig_angle = 45.0;
+  m_zig_duration = 10.0;
+  m_temp_int=0;
+  m_past_waypt = false;
+
   // Provide a default behavior name
   IvPBehavior::setParam("name", "defaultname");
 
@@ -138,41 +144,49 @@ IvPFunction* BHV_ZigLeg::onRunState()
   // Part 1: Build the IvP function
   IvPFunction *ipf = 0;
   
-  //  m_curr_time = getBufferCurrTime();
- 
-
   bool ok_x, ok_y, ok_wpt, ok_hdg;
- 
+  
+  postMessage("PAST_WPT",m_past_waypt);
   //Check to see if waypoint changes
   m_wpt_index = getBufferDoubleVal("WPT_INDEX",ok_wpt);
   m_curr_time = getBufferCurrTime();
-
+  
   if (m_wpt_index != m_wpt_index_curr){
     //New waypt, set pulse time
     m_pulse_time =m_curr_time+5.0;
     m_wpt_index_curr = m_wpt_index;
-  }
+    m_past_waypt=false; //Just arrived at new waypt
+    m_temp_int = 0;
+ }
   
   double time_diff = abs(m_pulse_time-m_curr_time);
   postMessage("TIME_DIFFERENCE",time_diff);
-  if (abs(m_pulse_time -m_curr_time)<3.0){
+  
+  if ((abs(m_pulse_time -m_curr_time)<1.0)&&(!m_past_waypt)){
+    m_past_waypt = true;
     m_osx = getBufferDoubleVal("NAV_X",ok_x);
     m_osy = getBufferDoubleVal("NAV_Y",ok_y);
     m_heading = getBufferDoubleVal("NAV_HEADING",ok_hdg);
-    sendPulse(m_pulse_time);
+    postMessage("VEH_HEADING",m_heading);
+    postMessage("NUM_POST",m_temp_int);
+    m_temp_int++;
+    // sendPulse(m_pulse_time);
     //Change ivp function
-    ZAIC_PEAK zaic_peak(m_domain, "course");
+    /* ZAIC_PEAK zaic_peak(m_domain, "course");
     zaic_peak.setSummit(45);
     zaic_peak.setMinMaxUtil(20,120);
     zaic_peak.setBaseWidth(20);
     ipf = zaic_peak.extractIvPFunction();
-    m_priority_wt = 90;
+    m_priority_wt = 90;*/
   }
 
-  if (abs(m_pulse_time - m_curr_time)<10.0){
-    //Change ivp function                                                                                                                                                                                                                                                                                                     
+
+
+  if ((m_past_waypt)&&(abs(m_pulse_time - m_curr_time)<m_zig_duration)){
+    //Change ivp function              
+    postMessage("SENT_NEW_ZAIC","true");
     ZAIC_PEAK zaic_peak(m_domain, "course");
-    zaic_peak.setSummit(45);
+    zaic_peak.setSummit(m_zig_angle+m_heading);
     zaic_peak.setMinMaxUtil(20,120);
     zaic_peak.setBaseWidth(20);
     ipf = zaic_peak.extractIvPFunction();
@@ -181,6 +195,7 @@ IvPFunction* BHV_ZigLeg::onRunState()
 
   }
   else{
+    postMessage("SENT_NEW_ZAIC","false");
     m_priority_wt = 10;
   }
   //std::this_thread::sleep_for(std::chrono::milliseconds(200));
