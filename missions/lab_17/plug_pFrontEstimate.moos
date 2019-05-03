@@ -6,18 +6,18 @@ ProcessConfig = pFrontEstimate
   vname = $(VNAME)
   temperature_factor = $(COOL_FAC)
   cooling_steps = $(COOL_STEPS)
-  min_offset = -120
-  max_offset = -60
-  min_angle = -5
-  max_angle = 15
+  min_offset = -100
+  max_offset = -100
+  min_angle = -4
+  max_angle = -4
 
-  min_amplitude = 0
-  max_amplitude = 50
+  min_amplitude = 5
+  max_amplitude = 5
 
-  min_period = 200
-  max_period = 600
-  min_wavelength = 100
-  max_wavelength = 500
+  min_period = 297
+  max_period = 297
+  min_wavelength = 210
+  max_wavelength = 215
 
   //min_alpha = 200
   //max_alpha = 500
@@ -25,12 +25,12 @@ ProcessConfig = pFrontEstimate
   min_alpha = 350
   max_alpha = 350
 
-  min_beta = 10
-  max_beta = 50
-  min_T_N = 15
-  max_T_N = 25 
-  min_T_S = 20
-  max_T_S = 30 
+  min_beta = 43
+  max_beta = 43
+  min_T_N = 22
+  max_T_N = 22 
+  min_T_S = 28
+  max_T_S = 28 
   concurrent = $(CONCURRENT)
   adaptive=$(ADAPTIVE)
 }
