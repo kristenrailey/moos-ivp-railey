@@ -31,6 +31,7 @@ class VehicleDataExchange : public AppCastingMOOSApp
  private: // Configuration variables
    std::string m_vname;
    std::string m_dest_name;
+   std::string temp_vname; //Delate later 
  private: // State variables
 };
 

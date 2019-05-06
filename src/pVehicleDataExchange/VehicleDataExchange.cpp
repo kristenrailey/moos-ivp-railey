@@ -48,15 +48,24 @@ bool VehicleDataExchange::OnNewMail(MOOSMSG_LIST &NewMail)
     bool   mdbl  = msg.IsDouble();
     bool   mstr  = msg.IsString();
 #endif
+
+    std::cout<<"key: "<<key<<std::endl;
     if (key=="UCTD_MSMNT_REPORT"){
       //Parse
       string temp_vname = tokStringParse(sval, "vname", ',', '=');
-      //Check if different vehicle
-      if (temp_vname!=m_vname){
+
+      if (temp_vname==m_vname){ //If it is the same vehicle, send to the other vehicle
 	m_dest_name = temp_vname;
 	//Build and  message
 	NodeMessage node_message;
 	node_message.setSourceNode(m_vname);
+	//betty vs. archie
+	if (m_vname == "archie"){
+	  m_dest_name = "betty";
+        }
+        else{
+	  m_dest_name = "archie";
+	}
 	node_message.setDestNode(m_dest_name);
 	node_message.setVarName(key);
 	node_message.setStringVal(sval);
@@ -64,19 +73,21 @@ bool VehicleDataExchange::OnNewMail(MOOSMSG_LIST &NewMail)
 	string msg = node_message.getSpec();
 
 	Notify("NODE_MESSAGE_LOCAL", msg);
-	
       }
+    }
+
+  
      
       
      
-    }
+
      if(key == "FOO") 
        cout << "great!";
 
      else if(key != "APPCAST_REQ") // handled by AppCastingMOOSApp
        reportRunWarning("Unhandled Mail: " + key);
-   }
-	
+
+  }
    return(true);
 }
 
@@ -161,7 +172,7 @@ bool VehicleDataExchange::buildReport()
   
   m_msgs <<"Own vehicle name: "<<m_vname<<endl;
   m_msgs <<"Dest vehicle: "<<m_dest_name<<endl;
-
+  m_msgs <<"Temp name: "<<temp_vname<<endl;
 
 
   return(true);
