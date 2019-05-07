@@ -25,7 +25,31 @@ set MODE = SURVEYING {
   RETURN = false
 }
 
+//----------------------------------------------
+Behavior = BHV_Waypoint
+{ 
+  name         = waypt_survey
+  pwt          = 100
+//  condition    = MODE==SURVEYING
+  perpetual    = true
+  updates      = SURVEY_UPDATES
+  activeflag   = SURVEY_UNDERWAY = true
+  inactiveflag = SURVEY_UNDERWAY = false
+  runflag      = UTS_RETURN_PAUSE = false
+  endflag      = RETURN = true
 
+         speed = 2   // meters per second
+        radius = 5.0
+   slip_radius = 15.0
+          lead = 8
+	  lead_damper=1
+	points = format=lawnmower, label=archie_survey, x=$(SURVEY_X), y=$(SURVEY_Y), width=$(WIDTH), height=$(HEIGHT),lane_width=$(LANE_WIDTH), rows=north-south, degs=$(DEGREES)
+
+        repeat = 0
+  visual_hints = nextpt_color=red, nextpt_lcolor=green
+  visual_hints = vertex_color=yellow, edge_color=gray25
+  visual_hints = vertex_size=1, edge_size=1
+}
 
 //----------------------------------------------
 Behavior = BHV_Waypoint
@@ -114,7 +138,7 @@ Behavior = BHV_Loiter
      center_activate = false            // default
            clockwise = true             // default
          slip_radius = 15               // default
-               speed = 3                // default
+               speed = 0                // default
        spiral_factor = -2               // default
 
            
@@ -122,7 +146,7 @@ Behavior = BHV_Loiter
        
      
        //       polygon = radial:: x=5,y=8,radius=20,pts=8  // example
-        polygon = format=radial, x=40, y=-110, radius=70, pts=30, snap=1, label=Lima
+        polygon = format=radial, x=40, y=-110, radius=40, pts=6, snap=1, label=Lima
 
          post_suffix = HENRY                             // example
 

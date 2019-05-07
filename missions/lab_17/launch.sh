@@ -80,10 +80,10 @@ fi
 #-------------------------------------------------------
 
 VNAME1="archie"      # The first  vehicle community
-START_POS1="0,0"  
+START_POS1="-5,0"  
 
 VNAME2="betty"
-START_POS2="0,0"
+START_POS2="5,0"
 
 nsplug meta_shoreside.moos targ_shoreside.moos -f WARP=$TIME_WARP \
    VNAME="shoreside" SHARE_LISTEN=$SHORE_LISTEN

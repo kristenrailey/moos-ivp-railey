@@ -99,9 +99,12 @@ ProcessConfig = uFldNodeComms
 
 	comms_range      = 100
 	critical_range   = 25
-	min_msg_interval = 15
-	max_msg_length   = 2048
-	groups           = true
+	//min_msg_interval = 15
+	//max_msg_length   = 2048
+	//groups           = true
+	min_msg_interval     = 0       // Unlimited frequency
+   	max_msg_length       = 0       // Unlimited length 
+
 	view_node_rpt_pulses = true
 }
 
