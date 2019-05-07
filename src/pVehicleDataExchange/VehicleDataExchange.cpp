@@ -18,6 +18,9 @@ using namespace std;
 
 VehicleDataExchange::VehicleDataExchange()
 {
+  m_num_notified_msgs = 0;
+  m_num_self_msgs=0;
+
 }
 
 //---------------------------------------------------------
@@ -71,8 +74,12 @@ bool VehicleDataExchange::OnNewMail(MOOSMSG_LIST &NewMail)
 	node_message.setStringVal(sval);
 
 	string msg = node_message.getSpec();
+	m_num_notified_msgs++;
 
 	Notify("NODE_MESSAGE_LOCAL", msg);
+      }
+      else{
+	m_num_self_msgs++;
       }
     }
 
@@ -172,8 +179,9 @@ bool VehicleDataExchange::buildReport()
   
   m_msgs <<"Own vehicle name: "<<m_vname<<endl;
   m_msgs <<"Dest vehicle: "<<m_dest_name<<endl;
-  m_msgs <<"Temp name: "<<temp_vname<<endl;
 
+  m_msgs<< "Number of notifications to dest vehicle: "<<m_num_notified_msgs <<endl;
+  m_msgs << "Number of temperature measurements to own vehicle: "<< m_num_self_msgs<< endl;
 
   return(true);
 }
