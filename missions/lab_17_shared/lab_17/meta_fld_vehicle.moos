@@ -28,7 +28,7 @@ Processconfig = ANTLER
   Run = uTimerScript	   @ NewConsole = false	~uTimerScript_RETURN
   Run = pFrontEstimate     @ NewConsole = false
   Run = pBasicContactMgr   @ NewConsole = false
-//  Run = pDiscoverFrontAngle @ NewConsole = false
+  Run = pDiscoverFrontAngle @ NewConsole = false
 }
 
 #include plug_pDiscoverFrontAngle.moos
