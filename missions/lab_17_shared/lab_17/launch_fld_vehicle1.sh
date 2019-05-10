@@ -12,8 +12,8 @@ VTEAM=""
 VNAME=""
 VMODEL="M300"
 
-#START_POS="0,0,180"
-START_POS="0,0"
+START_POS="0,0,180"
+#START_POS="0,0"
 RETURN_POS="5,0"
 LOITER_POS="x=100,y=-180"
 GRAB_POS=""
@@ -31,10 +31,10 @@ HEIGHT1=150
 WIDTH1=120
 LANE_WIDTH1=25
 DEGREES1=270
-LOITER_CENTER_X1=80
-LOITER_CENTER_Y1=-80
-LOITER_CENTER_X2=25
-LOITER_CENTER_Y2=-110
+LOITER_CENTER_X1="80"
+LOITER_CENTER_Y1="-80"
+LOITER_CENTER_X2="25"
+LOITER_CENTER_Y2="-110"
 
 
 #-------------------------------------------------------
@@ -222,7 +222,7 @@ fi
 echo "Assembling MOOS file targ_${VNAME}.moos"
 
 
-nsplug meta_vehicle.moos targ_${VNAME}.moos -f \
+nsplug meta_fld_vehicle.moos targ_${VNAME}.moos -f \
     VNAME=$VNAME                 \
     VPORT=$VPORT                 \
     WARP=$TIME_WARP              \
@@ -239,12 +239,13 @@ nsplug meta_vehicle.moos targ_${VNAME}.moos -f \
     VTYPE="kayak"                \
     VTEAM="blue"                 \
     START_POS=$START_POS         \
-    $SIM                         \
-   COOL_FAC=$COOL_FAC  COOL_STEPS=$COOL_STEPS \
-   CONCURRENT=$CONCURRENT  ADAPTIVE=$ADAPTIVE
+    COOL_FAC=$COOL_FAC           \
+    COOL_STEPS=$COOL_STEPS       \
+    CONCURRENT=$CONCURRENT       \
+    ADAPTIVE=$ADAPTIVE
 
 echo "Assembling BHV file targ_${VNAME}.bhv"
-nsplug meta_vehicle.bhv targ_${VNAME}.bhv -f  \
+nsplug meta_fld_vehicle.bhv targ_${VNAME}.bhv -f  \
         RETURN_POS=${RETURN_POS}    \
         TRAIL_RANGE=$TRAIL_RANGE    \
         TRAIL_ANGLE=$TRAIL_ANGLE    \
@@ -252,12 +253,17 @@ nsplug meta_vehicle.bhv targ_${VNAME}.bhv -f  \
         VNAME=$VNAME                \
         GRAB_POS=$GRAB_POS          \
         UNTAG_POS=$UNTAG_POS       \     
-  START_POS=$START_POS SURVEY_X=$SURVEY_X SURVEY_Y=$SURVEY_Y \
-        HEIGHT=$HEIGHT1   WIDTH=$WIDTH1 LANE_WIDTH=$LANE_WIDTH1 \
-        DEGREES=$DEGREES1  LOITER_CENTER_X=$LOITER_CENTER_X1 \
+        START_POS=$START_POS       \
+	SURVEY_X=$SURVEY_X         \
+	SURVEY_Y=$SURVEY_Y      \
+        HEIGHT=$HEIGHT1          \
+	WIDTH=$WIDTH1            \
+	LANE_WIDTH=$LANE_WIDTH1   \
+        DEGREES=$DEGREES1         \
+	LOITER_CENTER_X=$LOITER_CENTER_X1 \
         LOITER_CENTER_Y=$LOITER_CENTER_Y1
 
-
+echo $LOITER_CENTER_X1
 if [ ${JUST_BUILD} = "yes" ] ; then
     echo "Files assembled; vehicle not launched; exiting per request."
     exit 0
