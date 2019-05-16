@@ -28,5 +28,9 @@ ProcessConfig = uTimerScript_RETURN
 
   DELAY_RESET = 0.5
 
+<<<<<<< HEAD
   EVENT = var=RETURN, val=true, time=1190
+=======
+  EVENT = var=RETURN, val=true, time=495
+>>>>>>> fb2639245a585e789592cd14516a2659e65e2ddd
 }

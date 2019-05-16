@@ -47,6 +47,7 @@ Behavior = BHV_Waypoint
   runflag      = UTS_RETURN_PAUSE = false
   endflag      = SCAN = false
   endflag      = SPIRAL = true
+<<<<<<< HEAD
   endflag      = MOVE_CENTER = true
   endflag      = ENCIRCLE_ACTIVE = true
 
@@ -55,10 +56,21 @@ capture_radius = 8
   capture_line = true                     
  lead_to_start = true
           lead = 8                   
+=======
+  endflag      = ENCIRCLE_ACTIVE = true
+
+capture_radius = 3                       
+  capture_line = false                     
+ lead_to_start = false                   
+>>>>>>> fb2639245a585e789592cd14516a2659e65e2ddd
          order = normal                   
         points = format=radial, x=60, y=-105, radius=60, pts=20, snap=1
    post_suffix = $(VNAME)                
         repeat = 0                       
+<<<<<<< HEAD
+=======
+   slip_radius = 15                      
+>>>>>>> fb2639245a585e789592cd14516a2659e65e2ddd
          speed = 3  
 
   visual_hints = vertex_size        = 5          
@@ -82,8 +94,12 @@ Behavior = BHV_Loiter
   activeflag   = SURVEY_UNDERWAY = true
   endflag      = RETURN = true
 
+<<<<<<< HEAD
 capture_radius = 8
    slip_radius = 15 
+=======
+
+>>>>>>> fb2639245a585e789592cd14516a2659e65e2ddd
          speed = 2   // meters per second
        polygon = radial:: x=80, y=-105, radius=30, pts=10
      speed_alt = 1.5
@@ -153,8 +169,13 @@ Behavior = BHV_AvoidCollision
         pwt_outer_dist = 50
         pwt_inner_dist = 20
         completed_dist = 75
+<<<<<<< HEAD
      min_util_cpa_dist = 4
      max_util_cpa_dist = 15    
+=======
+     min_util_cpa_dist = 8
+     max_util_cpa_dist = 25    
+>>>>>>> fb2639245a585e789592cd14516a2659e65e2ddd
              pwt_grade = linear
    bearing_line_config = white:0, green:0.65, yellow:0.8, red:1.0
 }
