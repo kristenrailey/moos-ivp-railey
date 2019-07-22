@@ -136,7 +136,7 @@ Behavior = BHV_PeriodicSurface
    //       mark_variable = GPS_UPDATE_RECEIVED   // default
     max_time_at_surface = 30                   // default
     // pending_status_var = PENDING_SURFACE       // default
-                 period =60 // TIME_AT_SURFACE       // default
+                 period =$(RESURF_PERIOD) // TIME_AT_SURFACE       // default
        zero_speed_depth = 0                     // default
  }
 
@@ -201,3 +201,6 @@ Behavior = BHV_ConstantDepth
             peakwidth = 3            // default
           summitdelta = 50           // default
  }
+
+
+//--------------------------------------------------------

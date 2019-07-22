@@ -1,0 +1,6 @@
+ProcessConfig = uTimerScript
+{
+	event = var=RETURN, val=true, time=$(RETURN_TIME)
+
+
+}

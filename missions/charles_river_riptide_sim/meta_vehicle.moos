@@ -28,7 +28,7 @@ ProcessConfig = ANTLER
   Run = pDeadManPost       @ NewConsole = false
   Run = uFldMessageHandler @ NewConsole = false
 
-
+  Run = uTimerScript	   @ Newconsole = false
 
 
 }
@@ -44,9 +44,12 @@ ProcessConfig = ANTLER
 #include plug_uFldMessageHandler.moos
 #include plug_uProcessWatch.moos
 #include plug_pBasicContactMgr.moos
-
+#include plug_uTimerScript.moos
 #ifdef SIM true
   #include plug_uSimMarine.moos
 #else 
 
 #endif
+
+
+

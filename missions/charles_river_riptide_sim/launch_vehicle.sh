@@ -4,6 +4,17 @@
 # Name: Kristen Railey, modified MB version
 # Date: May 8th, 2019
 # Note: Goal of general pavilion vehicle launch script
+
+
+#---------------------------------------------------------
+# Part 0: Mission params to change
+#---------------------------------------------------------
+
+MISSION_DEPTH="2" #Depth vehicle runs at                                                                                                                                                                      
+RESURF_PERIOD="30" #How often the vehicle resurfaces   
+RETURN_TIME="30" #Max mission time, when vehicle returns                                                                                                                                                        
+
+
 #---------------------------------------------------------
 #  Part 1: Initialize configurable variables with defaults
 #---------------------------------------------------------
@@ -12,10 +23,9 @@ JUST_MAKE="no"
 HELP="no"
 SIM="true" #SET TO TRUE
 INDEX=0
-STARTPOS="0,0,180"
-RETURN_POS="6,-6"
+STARTPOS="6,-6,180"
+RETURN_POS="15,-15"
 INTERACTIVE="true"
-MISSION_DEPTH="0"
 SHORE_IPADDR=18.21.171.95 #UPDATE THIS FROM PMARINEVIEWER
 SHORE_PSHARE=9200
 
@@ -135,10 +145,10 @@ nsplug meta_vehicle.moos targ_${VNAME}.moos -f -i              \
        BOT_MOOSDB=$BOT_MOOSDB      SHORE_IPADDR=$SHORE_IPADDR  \
        START_POS=$STARTPOS         HOSTIP_FORCE="localhost"    \
         UUV_IP=$UUV_IP            SIM=$SIM                     \
-     
+       RETURN_TIME=$RETURN_TIME
 nsplug meta_vehicle.bhv targ_${VNAME}.bhv -f -i \
-       RETURN_POS=${RETURN_POS}                       \
-      MISSION_DEPTH=$MISSION_DEPTH
+       RETURN_POS=${RETURN_POS}    RESURF_PERIOD=$RESURF_PERIOD  \
+      MISSION_DEPTH=$MISSION_DEPTH 
 
 
 #---------------------------------------------------------
