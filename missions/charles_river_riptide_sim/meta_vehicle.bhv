@@ -32,7 +32,7 @@ Behavior = BHV_Waypoint
                 lead = 8
          lead_damper = 1
        lead_to_start = true
-               speed = 4   // meters per second
+               speed = 1.5   // meters per second
         capture_line = true
       capture_radius = 5.0
          slip_radius = 5.0
@@ -47,7 +47,7 @@ Behavior = BHV_Waypoint
 
   	    points = format=radial, label=survey, x=50,y=-20, radius = 20, pts=8,snap=1
 	      order = reverse
-             repeat = 3
+             repeat = 8 // Number of times around
 
     visual_hints = nextpt_color=yellow
     visual_hints = nextpt_vertex_size=8
@@ -71,7 +71,7 @@ Behavior=BHV_Waypoint
   endflag    = STATION_KEEP = true
   endflag    = MISSION = complete
 
-           speed = 2.0
+           speed = 1.5
   capture_radius = 2.0
      slip_radius = 8.0
           points = $(RETURN_POS)
@@ -131,10 +131,10 @@ Behavior = BHV_PeriodicSurface
    // ------------------------------------
   // acomms_mark_variable = ACOMMS_RECEIVED       // example
            ascent_grade = linear                // default
-           ascent_speed = 2                    // default
-   atsurface_status_var = 30 //TIME_AT_SURFACE       // default
-   //       mark_variable = GPS_UPDATE_RECEIVED   // default
-    max_time_at_surface = 30                   // default
+           ascent_speed = 1.5                    // default
+   atsurface_status_var = 300 //TIME_AT_SURFACE       // default
+          mark_variable = GPS_UPDATE_RECEIVED   // default
+    max_time_at_surface = 300                   // default
     // pending_status_var = PENDING_SURFACE       // default
                  period =$(RESURF_PERIOD) // TIME_AT_SURFACE       // default
        zero_speed_depth = 0                     // default

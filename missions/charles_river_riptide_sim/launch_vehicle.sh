@@ -11,8 +11,8 @@
 #---------------------------------------------------------
 
 MISSION_DEPTH="2" #Depth vehicle runs at                                                                                                                                                                      
-RESURF_PERIOD="30" #How often the vehicle resurfaces   
-RETURN_TIME="30" #Max mission time, when vehicle returns                                                                                                                                                        
+RESURF_PERIOD="120" #How often the vehicle resurfaces   
+RETURN_TIME="100" #Max mission time, when vehicle returns                                                                                                                                                        
 
 
 #---------------------------------------------------------
