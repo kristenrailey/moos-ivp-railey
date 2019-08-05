@@ -50,7 +50,7 @@ Behavior = BHV_Waypoint
 
   	   // points = format=radial, label=survey, x=50,y=-20, radius = 20, pts=8,snap=1
             points = format=radial, label=survey, x=328142.5235123395,y=4691664.613410329, radius = 20, pts=8,snap=1
-
+// Long dist new_x =3.281525235123395e+05 new_y = 4.691649613410329e+06
 	      order = reverse
              repeat = 8 // Number of times around
 
