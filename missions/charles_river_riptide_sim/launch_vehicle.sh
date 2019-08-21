@@ -10,7 +10,7 @@
 # Part 0: Mission params to change
 #---------------------------------------------------------
 
-MISSION_DEPTH="2" #Depth vehicle runs at                                                                                                                                                                      
+MISSION_DEPTH="0" #Depth vehicle runs at                                                                                                                                                                      
 RESURF_PERIOD="120" #How often the vehicle resurfaces   
 RETURN_TIME="100" #Max mission time, when vehicle returns                                                                                                                                                        
 
