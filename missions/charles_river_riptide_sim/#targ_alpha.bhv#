@@ -46,30 +46,11 @@ Behavior = BHV_ConstantHeading
 		heading = 125
               basewidth = 10           // default
                duration = 5            // default
+                  speed = 1.2            // default
    heading_mismatch_var = HDG_DIFF     // example
               peakwidth = 10           // default
             summitdelta = 25           // default
   endflag    = SURVEYING = true
- }
-
-//----------------------------------------------
-Behavior = BHV_ConstantSpeed
- {
-   // General Behavior Parameters
-   // ---------------------------
-   name         = const_spd_transit  // example
-   pwt          = 100                // default
-   condition    = MODE==GOING-STRAIGHT   // example
-   updates      = CONST_SPD_UPDATES  // example
-
-   // Parameters specific to this behavior
-   // ------------------------------------
-            basewidth = 0.2          // default
-             duration = no-time-limit            // default
-                speed = 1.0            // default
-   speed_mismatch_var = SPEED_DIFF   // example
-            peakwidth = 0            // default
-          summitdelta = 0            // default
  }
 
 //----------------------------------------------
@@ -127,7 +108,7 @@ Behavior=BHV_Waypoint
            speed = 1.5
   capture_radius = 2.0
      slip_radius = 8.0
-          points = $(RETURN_POS)
+          points = 15,-15
 	  
  }
 
@@ -189,7 +170,7 @@ Behavior = BHV_PeriodicSurface
           mark_variable = GPS_UPDATE_RECEIVED   // default
     max_time_at_surface = 300                   // default
     // pending_status_var = PENDING_SURFACE       // default
-                 period =$(RESURF_PERIOD) // TIME_AT_SURFACE       // default
+                 period =120 // TIME_AT_SURFACE       // default
        zero_speed_depth = 0                     // default
  }
 
@@ -206,7 +187,7 @@ Behavior = BHV_ConstantDepth
    // Parameters specific to this behavior
    // ------------------------------------
             basewidth = 100          // default
-  		  depth = $(MISSION_DEPTH)
+  		  depth = 2
    depth_mismatch_var = DEPTH_DIFF   // example
              duration = no-time-limit            // default
             peakwidth = 3            // default
@@ -279,6 +260,7 @@ Behavior = BHV_ConstantDepth
 
 
 //--------------------------------------------------------
+
 
 
 
