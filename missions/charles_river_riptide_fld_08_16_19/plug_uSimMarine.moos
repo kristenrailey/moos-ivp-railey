@@ -1,0 +1,21 @@
+//------------------------------------------------------
+// uSimMarine Configuration Block  (Created from plugin)
+
+ProcessConfig = uSimMarine
+{
+  AppTick   = 10
+  CommsTick = 10
+
+  START_POS = $(START_POS)
+  PREFIX    = NAV
+  buoyancy_rate        = 0.15
+   max_depth_rate       = 5
+   max_depth_rate_speed = 2.0
+   default_water_depth  = 400
+
+  //rotate_speed = 0.012
+  //drift_x      = 0.0045
+
+  //thrust_map = -100:-2, 0:0, 20:1, 40:2, 60:3, 80:5, 100:5
+  //thrust_map = -100:-2, 0:0, 20:1, 40:2, 60:3, 80:5, 100:5
+}
