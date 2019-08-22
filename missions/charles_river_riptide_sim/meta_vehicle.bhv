@@ -140,7 +140,7 @@ Behavior = BHV_OpRegion
   condition  = MODE==ACTIVE
   condition  = OPREGION=true
 
-	max_time = 600
+	max_time = 10
 	max_depth = 0.5
 	breached_depth_flag = SAY_MOOS = The max depth has been excceded
         breached_poly_flag = SAY_MOOS = The op region has been violated
