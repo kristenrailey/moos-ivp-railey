@@ -6,6 +6,7 @@ initialize  OPREGION=true
 initialize  SURVEY = false
 initialize  STATION_KEEP = false
 initialize  ENTER_OP_REGION = true
+initialize  RACE = true
 
 set MODE = ACTIVE {
   DEPLOY = true
@@ -31,6 +32,11 @@ set MODE = SURVEYING{
   SURVEY = true
 }
 
+set MODE = RACETRACK{
+  MODE = ACTIVE
+  RACE = true
+}
+
 //-----------------------------------------------
 Behavior = BHV_ConstantHeading
  {
@@ -45,11 +51,11 @@ Behavior = BHV_ConstantHeading
    // ------------------------------------
 		heading = 125
               basewidth = 10           // default
-               duration = 10            // default
+               duration = 30            // default
    heading_mismatch_var = HDG_DIFF     // example
               peakwidth = 10           // default
             summitdelta = 25           // default
-  endflag    = SURVEY = true
+  endflag    = RACE = true
   endflag    = ENTER_OP_REGION = false
  }
 
@@ -91,15 +97,7 @@ Behavior = BHV_Waypoint
       capture_radius = 5.0
          slip_radius = 5.0
 	efficiency_measure = all
-
-	// Bigger home plate
-        // polygon = pts={-17,-26:52,1:69,-40:41,-67:1,-68} //
-
-	// Smaller home plate
-  //polygon = pts={-2,-21:44,-2:56,-29:37,-48:10,-49}
-//  points = format=radial, label=foxtrot, x=0, y=40, radius=60, pts=6, snap=1
-
-  	    points = format=radial, label=survey, x=50,y=-20, radius = 20, pts=8,snap=1
+  	    points = format=radial, label=survey, x=60,y=-30, radius = 20, pts=8,snap=1
 	      order = reverse
              repeat = 8 // Number of times around
 
@@ -111,6 +109,39 @@ Behavior = BHV_Waypoint
   
   endflag    = RETURN = true
   
+}
+//----------------------------------------------
+Behavior = BHV_Waypoint
+{
+  name      = waypt_racetrack
+  pwt       = 100
+  condition = MODE==RACETRACK
+
+  updates    = WPT_UPDATE
+  perpetual  = false
+
+                lead = 8
+         lead_damper = 1
+       lead_to_start = true
+               speed = 1.5   // meters per second
+        capture_line = true
+      capture_radius = 5.0
+         slip_radius = 5.0
+        efficiency_measure = all
+          //  points = format=radial, label=survey, x=50,y=-20, radius = 20, pts=8,snap=1
+         points = format=ellipse, label=golf, x=50, y=-90, degs=30, pts=14, snap=1,major=150, minor=10
+    
+	  order = reverse
+             repeat = 8 // Number of times around
+
+    visual_hints = nextpt_color=yellow
+    visual_hints = nextpt_vertex_size=8
+    visual_hints = nextpt_lcolor=gray70
+    visual_hints = vertex_color=dodger_blue, edge_color=white
+    visual_hints = vertex_size=5, edge_size=1
+
+  endflag    = RETURN = true
+
 }
 
 //----------------------------------------------
@@ -140,24 +171,23 @@ Behavior = BHV_OpRegion
   condition  = MODE==ACTIVE
   condition  = OPREGION=true
 
-	max_time = 10
+	max_time = 600
 	max_depth = 0.5
 	breached_depth_flag = SAY_MOOS = The max depth has been excceded
         breached_poly_flag = SAY_MOOS = The op region has been violated
         breached_time_flag = SAY_MOOS = The maximum mission time has been exceeded 
 
 	   // use this poly for testing polygon breach	   
-           //  polygon = pts={-35,-23 : -22,-53 : 86,-3   : 74,26}
 
 
-             polygon = pts={-35,-23 : -8,-86 : 102,-38 : 74,26}
+             polygon = pts={-50,-40 : 100,20 : 180,20 : 180,-200 : -50,-200 : -100,-75}
+
 //commented    soft_poly_breach = true
   trigger_entry_time = 5
   trigger_exit_time  = 0
         visual_hints = edge_size=1, vertex_size=2
 
 }
-
 
 //----------------------------------------------
 Behavior = BHV_StationKeep
@@ -272,6 +302,30 @@ Behavior = BHV_ConstantDepth
    pwt          = 100                // default
 
    condition    = MODE==GOING-STRAIGHT
+   updates      = CONST_DEP_UPDATES  // example
+
+   // Parameters specific to this behavior
+   // ------------------------------------
+            basewidth = 100          // default
+                depth = 0            // default
+   depth_mismatch_var = DEPTH_DIFF   // example
+             duration = no-time-limit            // default
+            peakwidth = 3            // default
+          summitdelta = 50           // default
+ }
+
+
+//--------------------------------------------------------
+
+//--------------------------------------------------------
+Behavior = BHV_ConstantDepth
+ {
+   // General Behavior Parameters
+   // ---------------------------
+   name         = const_dep_racetrack   // example
+   pwt          = 100                // default
+
+   condition    = MODE==RACETRACK
    updates      = CONST_DEP_UPDATES  // example
 
    // Parameters specific to this behavior

@@ -12,7 +12,7 @@
 
 MISSION_DEPTH="0" #Depth vehicle runs at                                                                                                                                                                      
 RESURF_PERIOD="120" #How often the vehicle resurfaces   
-RETURN_TIME="100" #Max mission time, when vehicle returns                                                                                                                                                        
+RETURN_TIME="600" #Max mission time, when vehicle returns                                                                                                                                                        
 
 
 #---------------------------------------------------------
@@ -23,7 +23,7 @@ JUST_MAKE="no"
 HELP="no"
 SIM="true" #SET TO TRUE
 INDEX=0
-STARTPOS="0,0,180"
+STARTPOS="20,-20,180"
 RETURN_POS="15,-15"
 INTERACTIVE="true"
 SHORE_IPADDR=18.21.171.95 #UPDATE THIS FROM PMARINEVIEWER
