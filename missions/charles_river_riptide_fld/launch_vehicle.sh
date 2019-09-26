@@ -10,9 +10,9 @@
 # Part 0: Mission params to change
 #---------------------------------------------------------
 
-MISSION_DEPTH="2" #Depth vehicle runs at                                                                                                                                                                      
+MISSION_DEPTH="0" #Depth vehicle runs at                                                                                                                                                                      
 RESURF_PERIOD="120" #How often the vehicle resurfaces   
-RETURN_TIME="1000" #Max mission time, when vehicle returns                                                                                                                                                        
+RETURN_TIME="600" #Max mission time, when vehicle returns                                                                                                                                                        
 
 
 #---------------------------------------------------------
@@ -21,10 +21,10 @@ RETURN_TIME="1000" #Max mission time, when vehicle returns
 TIME_WARP=1
 JUST_MAKE="no"
 HELP="no"
-SIM="true" #SET TO TRUE
+SIM="false" #SET TO TRUE
 INDEX=0
-#STARTPOS="6,-6,180"
-#RETURN_POS="15,-15"
+#STARTPOS="20,-20,180"
+#RETURN_POS="20,-20"
 STARTPOS="328098.5235123395,4691678.613410329,180"
 RETURN_POS="328107.5235123395,4691669.613410329"
 INTERACTIVE="true"
@@ -128,8 +128,8 @@ fi
 #BOT_PSHARE="92$INDEX"
 #BOT_MOOSDB="90$INDEX"
 
-BOT_PSHARE="9201"                                                         
-BOT_MOOSDB="9001"
+BOT_PSHARE="9200"                                                         
+BOT_MOOSDB="9000"
 #---------------------------------------------------------
 #  Part 6: Create the .moos and .bhv files.
 #    Note: Failed nsplug will abort launch due to bash -e on line 1

@@ -3,10 +3,8 @@
 initialize  DEPLOY = false
 initialize  RETURN = false
 initialize  OPREGION=true
-initialize  SURVEY = false
-initialize  STATION_KEEP = false
-initialize  ENTER_OP_REGION = true
 initialize  MOOS_MANUAL_OVERRIDE=false
+//initialize = RETURN_ALL = false 
 
 
 set MODE = ACTIVE {
@@ -21,59 +19,8 @@ set MODE = STATION-KEEPING {
 set MODE = RETURNING {
   MODE = ACTIVE
   RETURN = true
-} 
+} SURVEYING
 
-set MODE = GOING-STRAIGHT{
-  MODE = ACTIVE
-  ENTER_OP_REGION = true
-}
-
-set MODE = SURVEYING{
-  MODE = ACTIVE
-  SURVEY = true
-}
-
-//-----------------------------------------------
-Behavior = BHV_ConstantHeading
- {
-   // General Behavior Parameters
-   // ---------------------------
-   name         = const_hdg            // example
-   pwt          = 100                  // default
-   condition    = MODE==GOING-STRAIGHT    // example
-   updates      = CONST_HDG_UPDATES    // example
-
-   // Parameters specific to this behavior
-   // ------------------------------------
-		heading = 125
-              basewidth = 10           // default
-               duration = 60            // default
-   heading_mismatch_var = HDG_DIFF     // example
-              peakwidth = 10           // default
-            summitdelta = 25           // default
-  endflag    = SURVEY = true
-  endflag    = ENTER_OP_REGION = false
- }
-
-//----------------------------------------------
-Behavior = BHV_ConstantSpeed
- {
-   // General Behavior Parameters
-   // ---------------------------
-   name         = const_spd_transit  // example
-   pwt          = 100                // default
-   condition    = MODE==GOING-STRAIGHT   // example
-   updates      = CONST_SPD_UPDATES  // example
-
-   // Parameters specific to this behavior
-   // ------------------------------------
-            basewidth = 0.2          // default
-             duration = no-time-limit            // default
-                speed = 1.0            // default
-   speed_mismatch_var = SPEED_DIFF   // example
-            peakwidth = 0            // default
-          summitdelta = 0            // default
- }
 
 //----------------------------------------------
 Behavior = BHV_Waypoint
@@ -100,11 +47,12 @@ Behavior = BHV_Waypoint
 	// Smaller home plate
   //polygon = pts={-2,-21:44,-2:56,-29:37,-48:10,-49}
 //  points = format=radial, label=foxtrot, x=0, y=40, radius=60, pts=6, snap=1
-            points = format=radial, label=survey, x=328142.5235123395,y=4691664.613410329, radius = 20, pts=8,snap=1
 
-  	    //points = format=radial, label=survey, x=50,y=-20, radius = 20, pts=8,snap=1
+  	   // points = format=radial, label=survey, x=50,y=-20, radius = 20, pts=8,snap=1
+            points = format=radial, label=survey, x=328142.5235123395,y=4691664.613410329, radius = 20, pts=8,snap=1
+// Long dist new_x =3.281525235123395e+05 new_y = 4.691649613410329e+06
 	      order = reverse
-             repeat = 2 // Number of times around
+             repeat = 8 // Number of times around
 
     visual_hints = nextpt_color=yellow
     visual_hints = nextpt_vertex_size=8
@@ -117,8 +65,7 @@ Behavior = BHV_Waypoint
 }
 
 //----------------------------------------------
-Behavior=BHV_Waypoint
-{
+Behavior=BHV_Waypoint{
   name       = waypt_return
   pwt        = 100
   condition  = MODE==RETURNING
@@ -142,24 +89,18 @@ Behavior = BHV_OpRegion
   pwt        = 100
   condition  = MODE==ACTIVE
   condition  = OPREGION=true
-
-	max_time = 600
-	max_depth = 0.5
-	breached_depth_flag = SAY_MOOS = The max depth has been excceded
-        breached_poly_flag = SAY_MOOS = The op region has been violated
-        breached_time_flag = SAY_MOOS = The maximum mission time has been exceeded 
+ 
 
 	   // use this poly for testing polygon breach	   
            //  polygon = pts={-35,-23 : -22,-53 : 86,-3   : 74,26}
-          polygon = pts={328057.5235123395,4691661.613410330 : 328084.5235123395,4691598.613410330 : 328194.5235123395,4691646.613410329 : 328166.5235123395, 4691710.613410329}
 
 
-            // polygon = pts={-35,-23 : -8,-86 : 102,-38 : 74,26}
+          //polygon = pts={-35,-23 : -8,-86 : 102,-38 : 74,26}
+	  polygon = pts={328057.5235123395,4691661.613410330 : 328084.5235123395,4691598.613410330 : 328194.5235123395,4691646.613410329 : 328166.5235123395, 4691710.613410329}
 //commented    soft_poly_breach = true
-  trigger_entry_time = 5
-  trigger_exit_time  = 0
+  trigger_entry_time = 1
+  trigger_exit_time  = 1
         visual_hints = edge_size=1, vertex_size=2
-
 }
 
 
@@ -169,8 +110,8 @@ Behavior = BHV_StationKeep
   name         = station-keep
   pwt          = 100
   condition    = MODE==STATION-KEEPING
- // activeflag   = OPREGION=false
- // inactiveflag = OPREGION=true
+  activeflag   = OPREGION=false
+  inactiveflag = OPREGION=true
 
      center_activate = true
         inner_radius = 5
@@ -182,6 +123,27 @@ Behavior = BHV_StationKeep
         visual_hints = vertex_size=0, edge_color=gray50
 }
 
+Behavior = BHV_PeriodicSurface
+ {
+   // General Behavior Parameters
+   // ---------------------------
+   name         = periodic_surface   // example
+   pwt          = 100                // default
+   condition    = MODE==SURVEYING   // example
+   updates      = PSURFACE_UPDATES   // example
+
+   // Parameters specific to this behavior
+   // ------------------------------------
+  // acomms_mark_variable = ACOMMS_RECEIVED       // example
+           ascent_grade = linear                // default
+           ascent_speed = 1.5                    // default
+   atsurface_status_var = 300 //TIME_AT_SURFACE       // default
+          mark_variable = GPS_UPDATE_RECEIVED   // default
+    max_time_at_surface = 300                   // default
+    // pending_status_var = PENDING_SURFACE       // default
+                 period =$(RESURF_PERIOD) // TIME_AT_SURFACE       // default
+       zero_speed_depth = 0                     // default
+ }
 
 //------------------------------------------------
 Behavior = BHV_ConstantDepth
@@ -196,6 +158,7 @@ Behavior = BHV_ConstantDepth
    // Parameters specific to this behavior
    // ------------------------------------
             basewidth = 100          // default
+//                depth = 2            // default
   		  depth = $(MISSION_DEPTH)
    depth_mismatch_var = DEPTH_DIFF   // example
              duration = no-time-limit            // default
@@ -246,30 +209,3 @@ Behavior = BHV_ConstantDepth
 
 
 //--------------------------------------------------------
-//--------------------------------------------------------
-Behavior = BHV_ConstantDepth
- {
-   // General Behavior Parameters
-   // ---------------------------
-   name         = const_dep_enter_op_region   // example
-   pwt          = 100                // default
-
-   condition    = MODE==GOING-STRAIGHT
-   updates      = CONST_DEP_UPDATES  // example
-
-   // Parameters specific to this behavior
-   // ------------------------------------
-            basewidth = 100          // default
-                depth = 0.25            // default
-   depth_mismatch_var = DEPTH_DIFF   // example
-             duration = no-time-limit            // default
-            peakwidth = 3            // default
-          summitdelta = 50           // default
- }
-
-
-//--------------------------------------------------------
-
-
-
-
